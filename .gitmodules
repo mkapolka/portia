@@ -1,0 +1,3 @@
+[submodule "things/things/lib/luatext"]
+	path = things/things/lib/luatext
+	url = https://github.com/Anaminus/luatext.git
