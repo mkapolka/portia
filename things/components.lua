@@ -7,8 +7,16 @@ Shaker = Component {
         self.values = self.values or {"value"}
     end,
     update = function(self)
-        for _, name in ipairs(self.values) do
-            self[name] = love.math.random(self.min, self.max)
+        local i = 1
+        continue = true
+        while continue do
+            local key = "output"..i
+            if self[key] then
+                self[key] = self[key] + love.math.random(self.min, self.max)
+            else
+                continue = false
+            end
+            i = i + 1
         end
     end
 }
@@ -50,5 +58,13 @@ Draggable = Component {
         if not love.mouse.isDown(1) and self.dragged then
             self.dragged = false
         end
+    end
+}
+
+font = love.graphics.newFont(32)
+Text = Component {
+    draw = function(self)
+        love.graphics.setFont(font)
+        love.graphics.print(self.text or "", self.x, self.y, self.r or 0, self.sx or 1, self.sy or 1)
     end
 }

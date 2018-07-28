@@ -4,25 +4,135 @@ tostring = tstring
 iota = 0
 function new_id()
     iota = iota + 1
-    return iota
+    return tostring(iota)
+end
+
+--[[
+  usage = {
+    inputs = {},
+    outputs={} -- I don't know if these are used
+  }
+
+  instance = {
+    inputs = {} -- stores values of inputs before visit happens
+  }
+
+  component definition {
+    components = [
+        {
+            type: string,
+            inputs: {key: path}
+        }
+    ]
+  }
+]]--
+
+--[[
+    usage = {
+        inputs = {ports}
+    }
+]]--
+
+PortMixer = function(ports) 
+    local output = {
+        prime = function(self, parent, component)
+            rawset(self, "parent", parent)
+            rawset(self, "component", component)
+        end,
+        ports = ports or {}
+    }
+
+    setmetatable(output, {
+        __index = function(self, idx)
+            local port = self.ports[idx]
+            if port then
+                return self.parent[port.NAME] or port.DEFAULT
+            end
+
+            return self.component[idx]
+        end,
+        __newindex = function(self, idx, value)
+            local port = self.ports[idx]
+            if port then
+                self.parent[port.NAME] = value
+            else
+                self.component[idx] = value
+            end
+        end
+    })
+    return output
+end
+
+Port = function(default, name)
+    name = name or new_id()
+    local output = {NAME=name, DEFAULT=default, ISPORT=true}
+    return output
+end
+
+function is_port(t)
+    return type(t) == "table" and t.ISPORT
 end
 
 usage_mt = {
     __newindex = function(self, key, value)
-        self.inputs[key] = value
+        self.ports[key] = value
     end
 }
 
-Usage = function(inputs, instance_mt)
+Usage = function(ports, index)
+    local c_ports = {}
+    local c_consts = {}
+
+    local order = ports.order or 0
+    ports.order = nil
+
+    for key, input in pairs(ports or {}) do
+        if is_port(input) then
+            c_ports[key] = input
+        else
+            c_consts[key] = input
+        end
+    end
+
+    local instance_mt = {
+        __index = function(self, idx)
+            local port = c_ports[idx]
+            if port then
+                return self.parent[port.NAME] or port.DEFAULT
+            else
+                local outval = rawget(self, idx)
+                if outval then
+                    return outval
+                else
+                    return rawget(index, idx)
+                end
+            end
+        end,
+        __newindex = function(self, idx, value)
+            local port = c_ports[idx]
+            if port then
+                self.parent[port.NAME] = value
+            else
+                return rawset(self, idx, value)
+            end
+        end
+    }
+
     local output = {
-        inputs = inputs or {},
-        outputs = {},
-        instantiate = function(self)
-            local output = {
-                inputs = {},
-                outputs = {}
-            }
+        ports = c_ports or {},
+        consts = c_consts,
+        order = order,
+        instantiate = function(self, parent)
+            local output = {parent=parent}
+            for key, value in pairs(c_consts) do
+                output[key] = value
+            end
             setmetatable(output, instance_mt)
+
+            if output.draw then
+                table.insert(DRAWABLES, output)
+            end
+            
             return output
         end
     }
@@ -33,27 +143,29 @@ end
 composite_instance_mt = {
     __index = {
         visit = function(instance, method_name)
-            for name, component in pairs(instance.definition.components) do
-                instance:populate_inputs(name)
-                if instance[name][method_name] ~= nil then
-                    instance[name][method_name](instance[name])
+            for _, name in pairs(instance.definition.sorted) do
+                local usage = instance.definition.components[name]
+                local component = instance[name]
+                if component[method_name] ~= nil then
+                    component[method_name](component)
                 end
             end
         end,
-        populate_inputs = function(instance, component_name)
-            component_def = instance.definition.components[component_name]
-            for name, path in pairs(component_def.inputs) do
-                instance[component_name][name] = instance:resolve_value(path)
+        --[[populate_inputs = function(instance, component_name)
+            local component_def = instance.definition.components[component_name]
+            for name, port in pairs(component_def.ports) do
+                instance[component_name][name] = instance:resolve_value(port)
             end
         end,
-        resolve_value = function(instance, path)
-            if type(path) == "table" then
-                c, output = path[1], path[2]
-                return instance[c][output]
-            else
-                return path
+        populate_ports = function(instance, component_name)
+            local component_def = instance.definition.components[component_name]
+            for name, port in pairs(component_def.ports) do
+                instance[port.NAME] = instance[component_name][name]
             end
         end,
+        resolve_value = function(instance, port)
+            return instance[port.NAME] or port.DEFAULT
+        end,]]--
         start = function(self)
             self:visit("start")
         end,
@@ -69,18 +181,24 @@ composite_instance_mt = {
 Composite = function(f)
     local components = {}
     f(components)
+    local sorted = {}
+    for key, component in pairs(components) do
+        table.insert(sorted, key)
+    end
+    table.sort(sorted, function(a, b) return (components[a].order or 0) < (components[b].order or 0) end)
+
     local output = {
-        components = components
+        components = components,
+        sorted = sorted
     }
     setmetatable(output, {
         __call = function(self, args)
             local usage = {
-                inputs = {},
-                outputs = {},
-                instantiate = function(self)
-                    local instance = {inputs = {}, outputs = {}, definition = output}
+                ports={},
+                instantiate = function(self, parent)
+                    local instance = {definition = output}
                     for key, usage in pairs(instance.definition.components) do
-                        local comp_instance = usage:instantiate()
+                        local comp_instance = usage:instantiate(instance)
                         instance[key] = comp_instance
                     end
                     setmetatable(instance, composite_instance_mt)
@@ -95,12 +213,11 @@ Composite = function(f)
 end
 
 Component = function(index)
-    local instance_mt = {
-        __index = index
-    }
     local mt = {
         __call = function(self, args)
-            return Usage(args, instance_mt)
+            local args = args or {}
+            args.order = args.order or index.default_order
+            return Usage(args, index)
         end
     }
     local output = {}
@@ -124,12 +241,22 @@ Sprite = Component {
     end,
     draw = function(self)
         love.graphics.draw(get_sprite(self.sprite), self.x, self.y)
-    end
+    end,
 }
+
+DRAWABLES = {}
+
+function draw_everything()
+    table.sort(DRAWABLES, function(a, b) return (a.depth or 0) < (b.depth or 0) end)
+    for _, drawable in pairs(DRAWABLES) do
+        drawable:draw()
+    end
+end
 
 Mouse = Component {
     update = function(self)
         self.x = love.mouse.getX()
         self.y = love.mouse.getY()
-    end
+    end,
+    default_order = -100
 }
