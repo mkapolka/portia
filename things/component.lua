@@ -1,5 +1,5 @@
-require 'ml'.import()
-tostring = tstring
+--require 'ml'.import()
+--tostring = tstring
 
 iota = 0
 function new_id()
@@ -151,21 +151,6 @@ composite_instance_mt = {
                 end
             end
         end,
-        --[[populate_inputs = function(instance, component_name)
-            local component_def = instance.definition.components[component_name]
-            for name, port in pairs(component_def.ports) do
-                instance[component_name][name] = instance:resolve_value(port)
-            end
-        end,
-        populate_ports = function(instance, component_name)
-            local component_def = instance.definition.components[component_name]
-            for name, port in pairs(component_def.ports) do
-                instance[port.NAME] = instance[component_name][name]
-            end
-        end,
-        resolve_value = function(instance, port)
-            return instance[port.NAME] or port.DEFAULT
-        end,]]--
         start = function(self)
             self:visit("start")
         end,
@@ -185,7 +170,10 @@ Composite = function(f)
     for key, component in pairs(components) do
         table.insert(sorted, key)
     end
-    table.sort(sorted, function(a, b) return (components[a].order or 0) < (components[b].order or 0) end)
+    function get_order(e)
+        return components[e].order or 0
+    end
+    table.sort(sorted, function(a, b) return get_order(a) < get_order(b) end)
 
     local output = {
         components = components,
@@ -234,22 +222,25 @@ end
 sprites_db = {}
 
 Sprite = Component {
+    visible = true,
     update = function(self)
         local sprite = get_sprite(self.sprite)
         self.width = sprite:getWidth()
         self.height = sprite:getHeight()
     end,
     draw = function(self)
-        love.graphics.draw(get_sprite(self.sprite), self.x, self.y)
+        love.graphics.draw(get_sprite(self.sprite), self.x, self.y, self.r, 1, 1, self.ox, self.oy)
     end,
 }
 
 DRAWABLES = {}
 
 function draw_everything()
-    table.sort(DRAWABLES, function(a, b) return (a.depth or 0) < (b.depth or 0) end)
+    table.sort(DRAWABLES, function(a, b) return -(a.depth or 0) < -(b.depth or 0) end)
     for _, drawable in pairs(DRAWABLES) do
-        drawable:draw()
+        if drawable.visible then
+            drawable:draw()
+        end
     end
 end
 
