@@ -1,4 +1,4 @@
-require "lib/luatext/luatext"
+require "lib/luatext"
 require "ml".import()
 tostring = tstring
 
