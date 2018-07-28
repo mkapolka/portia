@@ -7,62 +7,6 @@ function new_id()
     return tostring(iota)
 end
 
---[[
-  usage = {
-    inputs = {},
-    outputs={} -- I don't know if these are used
-  }
-
-  instance = {
-    inputs = {} -- stores values of inputs before visit happens
-  }
-
-  component definition {
-    components = [
-        {
-            type: string,
-            inputs: {key: path}
-        }
-    ]
-  }
-]]--
-
---[[
-    usage = {
-        inputs = {ports}
-    }
-]]--
-
-PortMixer = function(ports) 
-    local output = {
-        prime = function(self, parent, component)
-            rawset(self, "parent", parent)
-            rawset(self, "component", component)
-        end,
-        ports = ports or {}
-    }
-
-    setmetatable(output, {
-        __index = function(self, idx)
-            local port = self.ports[idx]
-            if port then
-                return self.parent[port.NAME] or port.DEFAULT
-            end
-
-            return self.component[idx]
-        end,
-        __newindex = function(self, idx, value)
-            local port = self.ports[idx]
-            if port then
-                self.parent[port.NAME] = value
-            else
-                self.component[idx] = value
-            end
-        end
-    })
-    return output
-end
-
 Port = function(default, name)
     name = name or new_id()
     local output = {NAME=name, DEFAULT=default, ISPORT=true}
