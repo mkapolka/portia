@@ -173,15 +173,3 @@ Game = Composite(function(c)
     c.quit = Quit {done=done}
 end)
 
-function love.load()
-    root = Game().instantiate()
-    root:start()
-end
-
-function love.update()
-    root:update()
-end
-
-function love.draw()
-    draw_everything()
-end

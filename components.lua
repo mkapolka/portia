@@ -1,4 +1,4 @@
-require "component"
+require "portia.component"
 
 function get_sprite(name)
     if sprites_db[name] == nil then

@@ -1,6 +1,3 @@
-require 'lib/ml'.import()
-tostring = tstring
-
 iota = 0
 function new_id()
     iota = iota + 1
@@ -111,7 +108,7 @@ Composite = function(f)
     }
 
     local index = {
-        definition = output,
+        definition = definition,
         visit = function(self, method_name)
             for _, name in pairs(self.definition.sorted) do
                 local component = self[name]
@@ -121,9 +118,9 @@ Composite = function(f)
             end
         end,
         oninstantiate = function(self)
-            for key, usage in pairs(instance.definition.components) do
-                local comp_instance = usage:instantiate(instance)
-                instance[key] = comp_instance
+            for key, usage in pairs(self.definition.components) do
+                local comp_instance = usage:instantiate(self)
+                self[key] = comp_instance
             end
         end,
         start = function(self)
