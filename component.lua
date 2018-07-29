@@ -76,6 +76,10 @@ Usage = function(ports, index)
             if output.draw then
                 table.insert(DRAWABLES, output)
             end
+
+            if output.oninstantiate then
+                output:oninstantiate()
+            end
             
             return output
         end
@@ -86,24 +90,6 @@ end
 
 composite_instance_mt = {
     __index = {
-        visit = function(instance, method_name)
-            for _, name in pairs(instance.definition.sorted) do
-                local usage = instance.definition.components[name]
-                local component = instance[name]
-                if component[method_name] ~= nil then
-                    component[method_name](component)
-                end
-            end
-        end,
-        start = function(self)
-            self:visit("start")
-        end,
-        update = function(self)
-            self:visit("update")
-        end,
-        draw = function(self)
-            self:visit("draw")
-        end
     }
 }
 
@@ -119,29 +105,39 @@ Composite = function(f)
     end
     table.sort(sorted, function(a, b) return get_order(a) < get_order(b) end)
 
-    local output = {
+    local definition = {
         components = components,
         sorted = sorted
     }
-    setmetatable(output, {
-        __call = function(self, args)
-            local usage = {
-                ports={},
-                instantiate = function(self, parent)
-                    local instance = {definition = output}
-                    for key, usage in pairs(instance.definition.components) do
-                        local comp_instance = usage:instantiate(instance)
-                        instance[key] = comp_instance
-                    end
-                    setmetatable(instance, composite_instance_mt)
-                    return instance
+
+    local index = {
+        definition = output,
+        visit = function(self, method_name)
+            for _, name in pairs(self.definition.sorted) do
+                local component = self[name]
+                if component[method_name] ~= nil then
+                    component[method_name](component)
                 end
-            }
-            setmetatable(usage, usage_mt)
-            return usage
+            end
+        end,
+        oninstantiate = function(self)
+            for key, usage in pairs(instance.definition.components) do
+                local comp_instance = usage:instantiate(instance)
+                instance[key] = comp_instance
+            end
+        end,
+        start = function(self)
+            self:visit("start")
+        end,
+        update = function(self)
+            self:visit("update")
+        end,
+        draw = function(self)
+            self:visit("draw")
         end
-    })
-    return output
+    }
+
+    return Component(index)
 end
 
 Component = function(index)
