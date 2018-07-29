@@ -1,4 +1,3 @@
-require "component"
 require "components"
 require "love"
 

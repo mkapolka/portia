@@ -1,5 +1,44 @@
 require "component"
 
+function get_sprite(name)
+    if sprites_db[name] == nil then
+        sprites_db[name] = love.graphics.newImage(name)
+    end
+    return sprites_db[name]
+end
+sprites_db = {}
+
+Sprite = Component {
+    visible = true,
+    update = function(self)
+        local sprite = get_sprite(self.sprite)
+        self.width = sprite:getWidth()
+        self.height = sprite:getHeight()
+    end,
+    draw = function(self)
+        love.graphics.draw(get_sprite(self.sprite), self.x, self.y, self.r, 1, 1, self.ox, self.oy)
+    end,
+}
+
+DRAWABLES = {}
+
+function draw_everything()
+    table.sort(DRAWABLES, function(a, b) return -(a.depth or 0) < -(b.depth or 0) end)
+    for _, drawable in pairs(DRAWABLES) do
+        if drawable.visible then
+            drawable:draw()
+        end
+    end
+end
+
+Mouse = Component {
+    update = function(self)
+        self.x = love.mouse.getX()
+        self.y = love.mouse.getY()
+    end,
+    default_order = -100
+}
+
 Shaker = Component {
     start = function(self)
         self.min = self.min or 0
