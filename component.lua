@@ -85,11 +85,6 @@ Usage = function(ports, index)
     return output
 end
 
-composite_instance_mt = {
-    __index = {
-    }
-}
-
 Composite = function(f)
     local components = {}
     f(components)
