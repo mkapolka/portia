@@ -1,5 +1,5 @@
---require 'ml'.import()
---tostring = tstring
+require 'lib/ml'.import()
+tostring = tstring
 
 iota = 0
 function new_id()

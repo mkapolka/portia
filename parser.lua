@@ -26,27 +26,13 @@ parser = MakeParser([[
 print(parser("varline", 'foo = sprite.hax'))
 
 print(parser("thingdef", [[
-    external Monster {
-        input hi;
-        output bye;
-        sprite Sprite {
-            image = "asdf",
-            hax = 123,
-            jommy = patch.mono
-        }
-    }
-
-    composite SpriteMover {
+    SpriteMover {
         Sprite {
             sprite = "sprite.png",
-            x = x
-            y = y
+            x = Mouse.x
+            y = Mouse.y
         }
-
-        Mouse {
-            x = x
-            y = y
-        }
+        Mouse
     }
 
     composite Guy {
