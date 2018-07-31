@@ -37,6 +37,9 @@ Components.Mouse = Component {
     update = function(self)
         self.x = love.mouse.getX()
         self.y = love.mouse.getY()
+        self.down = love.mouse.isDown(1)
+        self.up = not love.mouse.isDown(1)
+        self.click = MOUSE_CLICKED
     end,
     default_order = -100
 }
@@ -167,7 +170,26 @@ Components.DistanceFrom = Component {
 Components.Spawner = function(ports)
     local class = ports.class
     ports.class = nil
-    local output = {
-        child_usage = Components[class](ports)
+    ports.trigger = nil
+    local index = {
+        child_usage = Components[class](),
+        oninstantiate = function(self)
+            self.instances = {}
+        end,
+        update = function(self)
+            if self.trigger then
+                local child = self.child_usage:instantiate(self)
+                table.insert(self.instances, child)
+                for key, value in pairs(ports) do
+                    child[key] = self[key]
+                end
+                child:start()
+            end
+
+            for _, child in pairs(self.instances) do
+                child:update()
+            end
+        end
     }
+    return Usage(ports, index)
 end
