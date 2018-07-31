@@ -1,5 +1,7 @@
 require "portia.lib.luatext"
 require "portia.component"
+require "portia.lib.ml".import()
+tostring=tstring
 
 parser = MakeParser([[
     <thingdef> := {name}(<ident>) `{` 
@@ -11,12 +13,28 @@ parser = MakeParser([[
         {inputs[]}( <varline> )*
     `}`;
     <varline> := {name}(<ident>) `=` (
-        | {val}(<string>)
-        | {val}(<number>)
+        | {val}(<constdef>)
         | {port}(<ident>)
     );
+    <constdef> := {}(<string> | <number> | <tabledef>);
+    <tabledef> := {tablify()}(<rawtabledef>);
+    <rawtabledef> := {emptytable()}(`{` `}`) | `{` ({[]}(<tablekv>)[`,`])+ `}`;
+    <tablekv> := {key}(<ident>) `=` {val}(<constdef>);
     <filedef> := {[]}(<thingdef>)*;
 ]])
+
+local actions = {
+    emptytable = function(obj)
+        return {}
+    end,
+    tablify = function(obj)
+        local output = {}
+        for _, pair in pairs(obj) do
+            output[pair.key] = pair.val
+        end
+        return output
+    end
+}
 
 function get_name(parts, desired)
     if parts[desired] then
@@ -31,7 +49,7 @@ function get_name(parts, desired)
 end
 
 function make_composites(components, string)
-    local composites = parser("filedef", string)
+    local composites = parser("filedef", string, actions)
     local output = {}
     for _, definition in pairs(composites) do
         local ports = {}
@@ -92,4 +110,6 @@ function test()
             SpriteMover {}
         }
     ]]))
+
+    print(parser("tabledef", "{hi = 123, sup={blarg = 123}}", actions))
 end
