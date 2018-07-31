@@ -1,12 +1,13 @@
 require "portia.component"
 require "portia.components"
+require "portia.parser"
 require "love"
 
 local Root = nil
 local root_instance = nil
 
 function love.load()
-    root_instance = Root().instantiate()
+    root_instance = Root():instantiate()
     root_instance:start()
 end
 

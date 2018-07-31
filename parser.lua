@@ -1,62 +1,95 @@
-require "lib/luatext"
-require "ml".import()
-tostring = tstring
+require "portia.lib.luatext"
+require "portia.component"
 
 parser = MakeParser([[
-    <thingtype> := `external` | `composite`;
-    <inputline> := `input` {name}(<ident>) `;`;
-    <outputline> := `output` {name}(<ident>) `;`;
-    <thingdef> := {type}(<thingtype>) {name}(<ident>) `{` 
-    (
-        | {inputs[]}( <inputline> )
-        | {outputs[]}( <outputline> )
-        | {components[]}( <thinginstance> )
-    )*
+    <thingdef> := {name}(<ident>) `{` 
+    [
+        {components[]}( <thinginstance> )*
+    ]
     `}`;
-    <thinginstance> := {name}(<ident>) {type}(<ident>) `{`
-        [
-            {inputs[]}( <varline> )
-            (`,` {inputs[]}( <varline> ))*
-        ] 
+    <thinginstance> := {type}(<ident>) `{`
+        {inputs[]}( <varline> )*
     `}`;
-    <varline> := {name}(<ident>) `=` {value}(<varvalue>);
-    <varvalue> := <string> | <number> | {[]}(<ident>)`.`{[]}(<ident>);
+    <varline> := {name}(<ident>) `=` (
+        | {val}(<string>)
+        | {val}(<number>)
+        | {port}(<ident>)
+    );
+    <filedef> := {[]}(<thingdef>)*;
 ]])
 
-print(parser("varline", 'foo = sprite.hax'))
+function get_name(parts, desired)
+    if parts[desired] then
+        local i = 1
+        while parts[desired.."_"..i] do
+            i = i + 1
+        end
+        return desired.."_"..i
+    else
+        return desired
+    end
+end
 
-print(parser("thingdef", [[
-    SpriteMover {
-        Sprite {
-            sprite = "sprite.png",
-            x = Mouse.x
-            y = Mouse.y
-        }
-        Mouse
-    }
+function make_composites(components, string)
+    local composites = parser("filedef", string)
+    local output = {}
+    for _, definition in pairs(composites) do
+        local ports = {}
+        local name = definition.name
+        local parts = {}
+        for _, component in pairs(definition.components) do
+            local usage = make_usage(component, ports, components)
+            parts[get_name(parts, component.type)] = usage
+        end
 
-    composite Guy {
-        Sprite {
-            sprite="sprite.png"
-            x = x
-            y = y,
-            width = width
-            height = height
+        local composite = Composite(function(c)
+            for name, usage in pairs(parts) do
+                c[name] = usage
+            end
+        end)
+        components[definition.name] = composite
+    end
+end
+
+function make_usage(usage, ports, components)
+    local inputs = {}
+    for _, input in pairs(usage.inputs) do
+        local value = nil
+        if input.val then value = input.val end
+        if input.port then
+            if ports[input.port] then
+                value = ports[input.port]
+            else
+                ports[input.port] = Port(nil, input.port)
+                value = ports[input.port]
+            end
+        end
+
+        inputs[input.name] = value
+    end
+    return components[usage.type](inputs)
+end
+
+function test()
+    print(parser("varline", 'foo = sprite.hax'))
+
+    print(parser("thinginstance", "Sprite { hi = blah }"))
+
+    print(parser("filedef", [[
+        SpriteMover {
+            Sprite {
+                sprite = "sprite.png"
+                x = x
+                y = y
+            }
+            Mouse {
+                x = x
+            }
         }
 
-        Hoverable {
-            x = x
-            y = y,
-            width = width
-            height = height
-            data1 = "hi there"
+        Game {
+            SpriteMover {}
+            SpriteMover {}
         }
-
-        Shaker {
-            min = -10
-            max = 10
-            output1 = x
-            output2 = y
-        }
-    }
-]]))
+    ]]))
+end

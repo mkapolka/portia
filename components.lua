@@ -1,5 +1,7 @@
 require "portia.component"
 
+Components = {}
+
 function get_sprite(name)
     if sprites_db[name] == nil then
         sprites_db[name] = love.graphics.newImage(name)
@@ -8,7 +10,7 @@ function get_sprite(name)
 end
 sprites_db = {}
 
-Sprite = Component {
+Components.Sprite = Component {
     visible = true,
     update = function(self)
         local sprite = get_sprite(self.sprite)
@@ -31,7 +33,7 @@ function draw_everything()
     end
 end
 
-Mouse = Component {
+Components.Mouse = Component {
     update = function(self)
         self.x = love.mouse.getX()
         self.y = love.mouse.getY()
@@ -39,7 +41,7 @@ Mouse = Component {
     default_order = -100
 }
 
-Shaker = Component {
+Components.Shaker = Component {
     start = function(self)
         self.min = self.min or 0
         self.max = self.max or 1
@@ -64,7 +66,7 @@ Shaker = Component {
     end
 }
 
-Add = Component {
+Components.Add = Component {
     start = function(self)
         self.a = 0
         self.b = 0
@@ -77,14 +79,14 @@ Add = Component {
 }
 
 HOVERING_DATA = {}
-Hovering = Component {
+Components.Hovering = Component {
     update = function(self)
         self.data = HOVERING_DATA.data
         self.hovering = HOVERING_DATA.hovering
     end
 }
 
-Draggable = Component {
+Components.Draggable = Component {
     start = function(self)
         self.dragged = false
         self.hovering = false
@@ -122,14 +124,14 @@ Draggable = Component {
 }
 
 font = love.graphics.newFont(32)
-Text = Component {
+Components.Text = Component {
     draw = function(self)
         love.graphics.setFont(font)
         love.graphics.print(self.text or "", self.x, self.y, self.r or 0, self.sx or 1, self.sy or 1)
     end
 }
 
-Sound = Component {
+Components.Sound = Component {
     start = function(self)
         self.sound = love.audio.newSource(self.file, "static")
         self.sound:play()
@@ -139,17 +141,33 @@ Sound = Component {
     end
 }
 
-Timer = Component {
+Components.Timer = Component {
     update = function(self)
         self.time = self.time - love.timer.getDelta()
         self.done = self.time < 0
     end
 }
 
-Quit = Component {
+Components.Quit = Component {
     update = function(self)
         if self.done then
             love.event.quit()
         end
     end
 }
+
+Components.DistanceFrom = Component {
+    update = function(self)
+        local dx = self.x1 - self.x2
+        local dy = self.y1 - self.y2
+        self.distance = math.sqrt(dx * dx + dy * dy)
+    end
+}
+
+Components.Spawner = function(ports)
+    local class = ports.class
+    ports.class = nil
+    local output = {
+        child_usage = Components[class](ports)
+    }
+end

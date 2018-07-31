@@ -37,7 +37,8 @@ Usage = function(ports, index)
 
     local instance_mt = {
         __index = function(self, idx)
-            local port = c_ports[idx]
+            local usage = rawget(self, "usage")
+            local port = usage.ports[idx]
             if port then
                 return self.parent[port.NAME] or port.DEFAULT
             else
@@ -50,7 +51,8 @@ Usage = function(ports, index)
             end
         end,
         __newindex = function(self, idx, value)
-            local port = c_ports[idx]
+            local usage = rawget(self, "usage")
+            local port = usage.ports[idx]
             if port then
                 self.parent[port.NAME] = value
             else
@@ -64,7 +66,7 @@ Usage = function(ports, index)
         consts = c_consts,
         order = order,
         instantiate = function(self, parent)
-            local output = {parent=parent}
+            local output = {parent=parent, usage=self}
             for key, value in pairs(c_consts) do
                 output[key] = value
             end
