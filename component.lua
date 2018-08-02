@@ -67,10 +67,17 @@ Usage = function(ports, index)
         order = order,
         instantiate = function(self, parent)
             local output = {parent=parent, usage=self}
+            setmetatable(output, instance_mt)
+
             for key, value in pairs(c_consts) do
                 output[key] = value
             end
-            setmetatable(output, instance_mt)
+
+            for key, value in pairs(index.defaults or {}) do
+                if not output[key] then
+                    output[key] = value
+                end
+            end
 
             if output.draw then
                 table.insert(DRAWABLES, output)

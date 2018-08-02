@@ -170,7 +170,6 @@ Components.DistanceFrom = Component {
 Components.Spawner = function(ports)
     local class = ports.class
     ports.class = nil
-    ports.trigger = nil
     local index = {
         child_usage = Components[class](),
         oninstantiate = function(self)
@@ -193,3 +192,17 @@ Components.Spawner = function(ports)
     }
     return Usage(ports, index)
 end
+
+Components.Movable = Component {
+    defaults = {
+        x = 0, y = 0,
+        vx = 0, vy = 0,
+        ax = 0, ay = 0,
+    },
+    update = function(self)
+        self.vx = self.vx + self.ax
+        self.vy = self.vy + self.ay
+        self.x = self.x + self.vx
+        self.y = self.y + self.vy
+    end
+}
