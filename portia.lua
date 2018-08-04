@@ -58,6 +58,7 @@ end
 Components.Keyboard = Component {
     update = function(self)
         for name, port in pairs(self.usage.ports) do
+            local name = string.gsub(name, "_pressed$", "")
             self[name] = KEYS[name]
             self[name.."_pressed"] = KEYS_PRESSED[name]
         end
