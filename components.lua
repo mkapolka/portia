@@ -23,6 +23,10 @@ end
 
 Components.Sprite = Drawable {
     visible = true,
+    defaults = {
+        x = 0, y = 0, width = 0, height = 0,
+        ox = 0, oy = 0, r = 0
+    },
     update = function(self)
         local sprite = get_sprite(self.sprite)
         self.width = sprite:getWidth()
@@ -43,17 +47,6 @@ function draw_everything()
         end
     end
 end
-
-Components.Mouse = Component {
-    update = function(self)
-        self.x = love.mouse.getX()
-        self.y = love.mouse.getY()
-        self.down = love.mouse.isDown(1)
-        self.up = not love.mouse.isDown(1)
-        self.click = MOUSE_CLICKED
-    end,
-    default_order = -100
-}
 
 Components.Shaker = Component {
     start = function(self)
