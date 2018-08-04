@@ -10,7 +10,18 @@ function get_sprite(name)
 end
 sprites_db = {}
 
-Components.Sprite = Component {
+Drawable = function(idx)
+    idx.oninstantiate = function(self)
+        self._id = new_id()
+        DRAWABLES[self._id] = self
+    end
+    idx.destroy = function(self)
+        DRAWABLES[self._id] = nil
+    end
+    return Component(idx)
+end
+
+Components.Sprite = Drawable {
     visible = true,
     update = function(self)
         local sprite = get_sprite(self.sprite)
@@ -127,7 +138,7 @@ Components.Draggable = Component {
 }
 
 font = love.graphics.newFont(32)
-Components.Text = Component {
+Components.Text = Drawable {
     draw = function(self)
         love.graphics.setFont(font)
         love.graphics.print(self.text or "", self.x, self.y, self.r or 0, self.sx or 1, self.sy or 1)
@@ -173,20 +184,34 @@ Components.Spawner = function(ports)
     local index = {
         child_usage = Components[class](),
         oninstantiate = function(self)
-            self.instances = {}
+            self.children = {}
         end,
         update = function(self)
             if self.trigger then
                 local child = self.child_usage:instantiate(self)
-                table.insert(self.instances, child)
+                table.insert(self.children, child)
                 for key, value in pairs(ports) do
                     child[key] = self[key]
                 end
                 child:start()
             end
 
-            for _, child in pairs(self.instances) do
+            to_remove = {}
+            for i = #self.children,1,-1 do
+                local child = self.children[i]
                 child:update()
+
+                if child[self.destroy_on] then
+                    child:destroy()
+                    table.remove(self.children, i)
+                end
+            end
+        end,
+        destroy = function(self)
+            for _, child in pairs(self.children) do
+                if child.destroy then
+                    child:destroy()
+                end
             end
         end
     }
@@ -204,5 +229,28 @@ Components.Movable = Component {
         self.vy = self.vy + self.ay
         self.x = self.x + self.vx
         self.y = self.y + self.vy
+    end
+}
+
+Components.Periodically = Component {
+    defaults = {
+        frequency = 1,
+        randomness = 0,
+        event = 0,
+    },
+    start = function(self)
+        self._t = self.frequency
+    end,
+    update = function(self)
+        if self.event then
+            self.event = false
+        end
+
+        self._t = self._t - love.timer.getDelta();
+        if self._t < 0 then
+            local r = self.randomness * self.frequency
+            self._t = self.frequency + love.math.random(-r, r)
+            self.event = true
+        end
     end
 }

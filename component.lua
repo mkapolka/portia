@@ -79,14 +79,10 @@ Usage = function(ports, index)
                 end
             end
 
-            if output.draw then
-                table.insert(DRAWABLES, output)
-            end
-
             if output.oninstantiate then
                 output:oninstantiate()
             end
-            
+
             return output
         end
     }
@@ -114,18 +110,21 @@ Composite = function(f)
     local index = {
         definition = definition,
         visit = function(self, method_name)
-            for _, name in pairs(self.definition.sorted) do
-                local component = self[name]
-                if component[method_name] ~= nil then
-                    component[method_name](component)
+            for _, child in pairs(self.children) do
+                if child[method_name] ~= nil then
+                    child[method_name](child)
                 end
             end
         end,
         oninstantiate = function(self)
+            self.children = {}
             for key, usage in pairs(self.definition.components) do
                 local comp_instance = usage:instantiate(self)
-                self[key] = comp_instance
+                self.children[key] = comp_instance
             end
+        end,
+        destroy = function(self)
+            self:visit("destroy")
         end,
         start = function(self)
             self:visit("start")
