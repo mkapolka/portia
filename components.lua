@@ -21,6 +21,18 @@ Drawable = function(idx)
     return Component(idx)
 end
 
+CAMERA = {
+    x = 0,
+    y = 0
+}
+
+Components.Camera = Component {
+    update = function(self)
+        self.x = CAMERA.x
+        self.y = CAMERA.y
+    end
+}
+
 Components.Sprite = Drawable {
     visible = true,
     defaults = {
@@ -33,9 +45,25 @@ Components.Sprite = Drawable {
         self.height = sprite:getHeight()
     end,
     draw = function(self)
-        love.graphics.draw(get_sprite(self.sprite), self.x, self.y, self.r, 1, 1, self.ox, self.oy)
+        love.graphics.draw(get_sprite(self.sprite), self.x - CAMERA.x, self.y - CAMERA.y, self.r, 1, 1, self.ox, self.oy)
     end,
 }
+
+font = love.graphics.newFont(32)
+Components.Text = Drawable {
+    draw = function(self)
+        love.graphics.setFont(font)
+        love.graphics.print(self.text or "", self.x - CAMERA.x, self.y - CAMERA.y, self.r or 0, self.sx or 1, self.sy or 1)
+    end
+}
+
+Components.Camera = Component {
+    update = function(self)
+        CAMERA.x = self.x
+        CAMERA.y = self.y
+    end
+}
+
 
 DRAWABLES = {}
 
@@ -127,14 +155,6 @@ Components.Draggable = Component {
         if not love.mouse.isDown(1) and self.dragged then
             self.dragged = false
         end
-    end
-}
-
-font = love.graphics.newFont(32)
-Components.Text = Drawable {
-    draw = function(self)
-        love.graphics.setFont(font)
-        love.graphics.print(self.text or "", self.x, self.y, self.r or 0, self.sx or 1, self.sy or 1)
     end
 }
 
