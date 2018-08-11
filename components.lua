@@ -26,6 +26,20 @@ CAMERA = {
     y = 0
 }
 
+Components.CameraWrite = Component {
+    update = function(self)
+        CAMERA.x = self.x
+        CAMERA.y = self.y
+    end
+}
+
+Components.CameraCenter = Component {
+    update = function(self)
+        CAMERA.x = self.x - love.graphics.getWidth() / 2
+        CAMERA.y = self.y - love.graphics.getHeight() / 2
+    end
+}
+
 Components.Camera = Component {
     update = function(self)
         self.x = CAMERA.x
@@ -264,6 +278,17 @@ Components.Periodically = Component {
             local r = self.randomness * self.frequency
             self._t = self.frequency + love.math.random(-r, r)
             self.event = true
+        end
+    end
+}
+
+Components.Random = Component {
+    defaults = {
+        min = 0, max = 0
+    },
+    update = function(self)
+        for key, port in pairs(self.usage.ports) do
+            self[key] = love.math.random(self.min, self.max)
         end
     end
 }
