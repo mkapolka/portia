@@ -1,4 +1,5 @@
 require "portia.component"
+local sti = require "sti"
 
 Components = {}
 
@@ -13,9 +14,14 @@ sprites_db = {}
 Drawable = function(idx)
     idx.oninstantiate = function(self)
         self._id = new_id()
-        DRAWABLES[self._id] = self
+        table.insert(DRAWABLES, self)
     end
     idx.destroy = function(self)
+        for i, drawable in ipairs(DRAWABLES) do
+            if drawable._id == self._id then
+                table.remove(DRAWABLES, i)
+            end
+        end
         DRAWABLES[self._id] = nil
     end
     return Component(idx)
@@ -59,7 +65,7 @@ Components.Sprite = Drawable {
         self.height = sprite:getHeight()
     end,
     draw = function(self)
-        love.graphics.draw(get_sprite(self.sprite), self.x - CAMERA.x, self.y - CAMERA.y, self.r, 1, 1, self.ox, self.oy)
+        love.graphics.draw(get_sprite(self.sprite), self.x, self.y, self.r, 1, 1, self.ox, self.oy)
     end,
 }
 
@@ -67,17 +73,9 @@ font = love.graphics.newFont(32)
 Components.Text = Drawable {
     draw = function(self)
         love.graphics.setFont(font)
-        love.graphics.print(self.text or "", self.x - CAMERA.x, self.y - CAMERA.y, self.r or 0, self.sx or 1, self.sy or 1)
+        love.graphics.print(self.text or "", self.x, self.y, self.r or 0, self.sx or 1, self.sy or 1)
     end
 }
-
-Components.Camera = Component {
-    update = function(self)
-        CAMERA.x = self.x
-        CAMERA.y = self.y
-    end
-}
-
 
 DRAWABLES = {}
 
@@ -289,6 +287,46 @@ Components.Random = Component {
     update = function(self)
         for key, port in pairs(self.usage.ports) do
             self[key] = love.math.random(self.min, self.max)
+        end
+    end
+}
+
+Components.TileMap = Drawable {
+    defaults = {
+        visible = true,
+        depth=1000,
+    },
+    draw = function(self)
+        self.map:draw(-CAMERA.x, -CAMERA.y)
+    end
+}
+
+Components.Map = Component {
+    start = function(self)
+        self.children = {}
+        local map = sti(self.file)
+        local tm = Components.TileMap():instantiate(self)
+        tm.map = map
+        table.insert(self.children, tm)
+
+        local usages = {}
+
+        for id, object in pairs(map.objects) do
+            local usage = usages[object.type] or Components[object.type]()
+            local child = usage:instantiate()
+            child.x = object.x
+            child.y = object.y
+            for key, value in pairs(object.properties) do
+                child[key] = value
+            end
+            table.insert(self.children, child)
+        end
+    end,
+    update = function(self)
+        for _, child in pairs(self.children) do
+            if child.update then
+                child:update()
+            end
         end
     end
 }

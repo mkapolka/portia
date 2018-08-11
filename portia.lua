@@ -21,6 +21,7 @@ function love.update()
 end
 
 function love.draw()
+    love.graphics.translate(-CAMERA.x, -CAMERA.y)
     draw_everything()
 end
 

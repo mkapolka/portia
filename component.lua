@@ -111,7 +111,7 @@ Composite = function(f)
         definition = definition,
         visit = function(self, method_name)
             for _, child in pairs(self.children) do
-                if child[method_name] ~= nil then
+                if child[method_name] then
                     child[method_name](child)
                 end
             end
@@ -122,6 +122,9 @@ Composite = function(f)
                 local comp_instance = usage:instantiate(self)
                 self.children[key] = comp_instance
             end
+        end,
+        start = function(self)
+            self:visit("start")
         end,
         destroy = function(self)
             self:visit("destroy")
