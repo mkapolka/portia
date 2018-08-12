@@ -14,6 +14,11 @@ end
 MOUSE_CLICKED = false
 function love.update()
     root_instance:update()
+    for _, component in pairs(Components) do
+        if type(component) == "table" and component.static_update then
+            component:static_update()
+        end
+    end
     MOUSE_CLICKED = false
     for key, _ in pairs(KEYS_PRESSED) do
         KEYS_PRESSED[key] = nil

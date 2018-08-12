@@ -151,7 +151,7 @@ Component = function(index)
             return Usage(args, index)
         end
     }
-    local output = {}
+    local output = index
     setmetatable(output, mt)
     return output
 end

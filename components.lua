@@ -22,7 +22,6 @@ Drawable = function(idx)
                 table.remove(DRAWABLES, i)
             end
         end
-        DRAWABLES[self._id] = nil
     end
     return Component(idx)
 end
@@ -173,17 +172,51 @@ Components.Draggable = Component {
 Components.Sound = Component {
     start = function(self)
         self.sound = love.audio.newSource(self.file, "static")
-        self.sound:play()
+        if not self.usage.ports.play then
+            self.sound:play()
+        end
     end,
     update = function(self)
+        if self.play then
+            self.sound:stop()
+            self.sound:play()
+        end
+
         self.done = not self.sound:isPlaying()
     end
 }
 
 Components.Timer = Component {
+    defaults = {
+        _t = 0, time = 1
+    },
     update = function(self)
-        self.time = self.time - love.timer.getDelta()
-        self.done = self.time < 0
+        if self.restart then
+            self._t = self.time
+        end
+        self._t = self._t - love.timer.getDelta()
+        self.done = self._t < 0
+        self.not_done = not self.done
+    end
+}
+
+Components.Tween = Component {
+    defaults = {
+        from = 0, to = 1,
+        when = false, time = 1,
+        value = 0, _t = 0
+    },
+    update = function(self)
+        if self.when then
+            self.when = false
+            self.value = self.from
+            self._t = 1
+        end
+
+        if self._t > 0 then
+            self._t = self._t - love.timer.getDelta() / self.time
+            self.value = self.from + (self.to - self.from) * (1 - self._t)
+        end
     end
 }
 
@@ -248,12 +281,15 @@ Components.Movable = Component {
         x = 0, y = 0,
         vx = 0, vy = 0,
         ax = 0, ay = 0,
+        dx = 0, dy = 0
     },
     update = function(self)
         self.vx = self.vx + self.ax
         self.vy = self.vy + self.ay
         self.x = self.x + self.vx
         self.y = self.y + self.vy
+        self.vx = self.vx * (1 / self.dx)
+        self.vy = self.vy * (1 / self.dy)
     end
 }
 
@@ -307,11 +343,15 @@ Components.Map = Component {
         local map = sti(self.file)
         local tm = Components.TileMap():instantiate(self)
         tm.map = map
+        tm.depth = 1000
         table.insert(self.children, tm)
 
         local usages = {}
 
         for id, object in pairs(map.objects) do
+            if not Components[object.type] then
+                error("No component named " .. object.type)
+            end
             local usage = usages[object.type] or Components[object.type]()
             local child = usage:instantiate()
             child.x = object.x
@@ -320,6 +360,7 @@ Components.Map = Component {
                 child[key] = value
             end
             table.insert(self.children, child)
+            child:start()
         end
     end,
     update = function(self)
