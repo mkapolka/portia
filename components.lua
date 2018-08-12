@@ -1,5 +1,5 @@
 require "portia.component"
-local sti = require "portia.sti"
+local sti = require "portia.lib.sti"
 
 Components = {}
 
