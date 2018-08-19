@@ -85,6 +85,9 @@ function make_usage(usage, ports, components)
 
         inputs[input.name] = value
     end
+    if not components[usage.type] then
+        error("No component named " .. usage.type)
+    end
     return components[usage.type](inputs)
 end
 
