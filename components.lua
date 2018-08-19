@@ -56,7 +56,7 @@ Components.Sprite = Drawable {
     visible = true,
     defaults = {
         x = 0, y = 0, width = 0, height = 0,
-        ox = 0, oy = 0, r = 0
+        ox = 0, oy = 0, r = 0, sx = 1, sy = 1
     },
     update = function(self)
         local sprite = get_sprite(self.sprite)
@@ -64,7 +64,7 @@ Components.Sprite = Drawable {
         self.height = sprite:getHeight()
     end,
     draw = function(self)
-        love.graphics.draw(get_sprite(self.sprite), self.x, self.y, self.r, 1, 1, self.ox, self.oy)
+        love.graphics.draw(get_sprite(self.sprite), self.x, self.y, self.r, self.sx, self.sy, self.ox, self.oy)
     end,
 }
 
@@ -81,7 +81,7 @@ DRAWABLES = {}
 function draw_everything()
     table.sort(DRAWABLES, function(a, b) return -(a.depth or 0) < -(b.depth or 0) end)
     for _, drawable in pairs(DRAWABLES) do
-        if drawable.visible then
+        if drawable.visible and drawable.visible ~= 0 then
             drawable:draw()
         end
     end
@@ -169,6 +169,49 @@ Components.Draggable = Component {
     end
 }
 
+Components.Offset = Component {
+    defaults = {
+        px = 0, py = 0, pz = 0, pw = 0,
+        x = 0, y = 0, z = 0, w = 0
+    },
+    update = function(self)
+        self.x = self.px + self.offset
+        self.y = self.py + self.offset
+        self.z = self.pz + self.offset
+        self.w = self.pw + self.offset
+    end
+}
+
+Components.Clickable = Component {
+    mouseIsIn = function(self)
+        return (self.x < love.mouse.getX() and self.x + self.width > love.mouse.getX()
+            and self.y < love.mouse.getY() and self.y + self.height > love.mouse.getY())
+    end,
+    update = function(self)
+        self.click = 0
+        if self:mouseIsIn() then
+            self.hovering = true
+            HOVERING_DATA.data = self.data
+            HOVERING_DATA.hovering = true
+        elseif self.hovering then
+            self.hovering = false
+            HOVERING_DATA.data = nil
+            HOVERING_DATA.hovering = false
+        end
+
+        if love.mouse.isDown(1) and self:mouseIsIn() then
+            self.click = 1
+            self.down = true
+        end
+
+        if not love.mouse.isDown(1) then
+            self.down = false
+        end
+
+        self.up = not self.down
+    end
+}
+
 Components.Sound = Component {
     start = function(self)
         self.sound = love.audio.newSource(self.file, "static")
@@ -177,7 +220,7 @@ Components.Sound = Component {
         end
     end,
     update = function(self)
-        if self.play then
+        if self.play and self.play > 0 then
             self.sound:stop()
             self.sound:play()
         end
