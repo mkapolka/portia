@@ -1,0 +1,20 @@
+Features
+* Port functors (x = y + 100, functions applied before reading/writing a port's value)
+* Streams (in progress)
+
+Improvements
+* Move to a more data-driven model w/ more explicitly defined & documented structures (Usage, Definition, Instance, etc).
+** Needed for doing real-time editing
+** Switch composites to take definitions rather than the current function approach (see 1)
+* Switch spawners and spawner-like components to take Definitions, reduce code reuse here
+* Document everything
+* Syntax errors & more compile time checking
+** Annotate components w/ ports, types, input / output values & check for conflicts at compile time
+
+To Research
+* Flattening instance hierarchy
+** I.e. Instead of an instance being {"Sprite": {state, state}, "Mouse": {state, state}, "SubComponent": {"Thing": {state}}}, it would be a flat structure {"Sprite/state1": "value", "Sprite/state2"}
+** Relative links would be handled at usage level rather than needing any instance-level info
+** Might reduce some overhead involved in having instances have references to their own usage / parents
+* Global ports w/ location identifiers
+** Rather than bubbling messages up to receiver then back down to listeners, everything would subscribe to a global location

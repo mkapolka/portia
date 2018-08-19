@@ -57,11 +57,6 @@ Usage = function(ports, index)
                 self.parent[port.NAME] = value
             else
                 rawset(self, idx, value)
-                if usage.streams[idx] then
-                    for _, cb in usage.streams[idx] do
-                        cb(idx, value)
-                    end
-                end
             end
         end
     }
@@ -69,7 +64,6 @@ Usage = function(ports, index)
     local output = {
         ports = c_ports or {},
         consts = c_consts,
-        streams = {},
         order = order,
         instantiate = function(self, parent)
             local output = {parent=parent, usage=self}
@@ -108,16 +102,6 @@ Composite = function(f)
     end
     table.sort(sorted, function(a, b) return get_order(a) < get_order(b) end)
 
-    local streams = {}
-    for key, component in pairs(components) do
-        if component.streams then
-            for _, name in pairs(component.streams) do
-                streams[key] = streams[key] or {}
-                table.insert(streams[key], value)
-            end
-        end
-    end
-
     local definition = {
         components = components,
         sorted = sorted
@@ -153,6 +137,20 @@ Composite = function(f)
         end,
         draw = function(self)
             self:visit("draw")
+        end,
+        receive = function(self, stream_key, value)
+            for key, usage in pairs(self.definition.components) do
+                if usage.ports[stream_key] then
+                    self[key]:receive(stream_key, value)
+                end
+            end
+        end,
+        send = function(self, stream_key, value)
+            if self.usage.ports[stream_key] then
+                self.parent:send(stream_key, value)
+            else
+                self.receive(stream_key, value)
+            end
         end
     }
 
