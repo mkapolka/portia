@@ -1,0 +1,33 @@
+Features (confident they'll be useful)
+* Port functors (x = y + 100, functions applied before reading/writing a port's value)
+* Streams (in progress)
+* Packing / unpacking port values
+** Assigning object values to component ports whose keys / values are built of other port values
+** i.e. Thing {data = {key1 = port1, key2 = port2}}, Thing2 {position = port1}
+
+Improvements (bug fixes, quality of life improvements, etc)
+* Move to a more data-driven model w/ more explicitly defined & documented structures (Usage, Definition, Instance, etc).
+** Needed for doing real-time editing
+** Switch composites to take definitions rather than the current function approach (see 1)
+* Switch spawners and spawner-like components to take Definitions, reduce code reuse here
+* Document everything
+* Syntax errors & more compile time checking
+** Annotate components w/ ports, types, input / output values & check for conflicts at compile time
+* Automatically determine order based on annotated r/w attributes of ports
+** A comp that only writes to a port should go first, then one that r/w, then one that only reads
+** Possibly could be split into sub-components- I have one part that reads from this value and writes to this one, another part of me reads from this and writes to that
+** If done correctly, this could obviate streams to use "bool" style streams, given that the value is always correct by the time my component reads it.
+
+To Research (experimental ideas that might or might not pan out)
+* Flattening instance hierarchy
+** I.e. Instead of an instance being {"Sprite": {state, state}, "Mouse": {state, state}, "SubComponent": {"Thing": {state}}}, it would be a flat structure {"Sprite/state1": "value", "Sprite/state2"}
+** Relative links would be handled at usage level rather than needing any instance-level info
+** Might reduce some overhead involved in having instances have references to their own usage / parents
+* Global ports w/ location identifiers
+** Rather than bubbling messages up to receiver then back down to listeners, everything would subscribe to a global location
+* Double buffered instances w/ purely linear data types
+** To simulate inter-component communication happening simultaneously rather than having ordering
+** If two components write to the same number, they get added
+** If two components write to the same string, they are zipped or something
+** Bools are OR'd probably etc
+** arrays could be concatenative & this could be used to handle messages - everything that pushes pushes to array, picked up in next iter (isn't flushed by any particular component)
