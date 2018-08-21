@@ -17,6 +17,7 @@ Improvements (bug fixes, quality of life improvements, etc)
 ** A comp that only writes to a port should go first, then one that r/w, then one that only reads
 ** Possibly could be split into sub-components- I have one part that reads from this value and writes to this one, another part of me reads from this and writes to that
 ** If done correctly, this could obviate streams to use "bool" style streams, given that the value is always correct by the time my component reads it.
+* Easy to spin up sample project for starting 1hgjs
 
 To Research (experimental ideas that might or might not pan out)
 * Flattening instance hierarchy
