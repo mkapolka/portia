@@ -37,8 +37,11 @@ function resolve_port(instance, port)
 
     if port.functor then
         local args = {}
-        for i, port in pairs(port.args) do
-            args[i] = resolve_port(instance, port)
+        for i, arg_port in pairs(port.args) do
+            args[i] = resolve_port(instance, arg_port)
+            if not args[i] then
+                return port.functor.default
+            end
         end
         return port.functor.read(unpack(args))
     else

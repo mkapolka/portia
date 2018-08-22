@@ -58,6 +58,9 @@ Components.Sprite = Drawable {
         x = 0, y = 0, width = 0, height = 0,
         ox = 0, oy = 0, r = 0, sx = 1, sy = 1
     },
+    start = function(self)
+        self:update()
+    end,
     update = function(self)
         local sprite = get_sprite(self.sprite)
         self.width = sprite:getWidth()
@@ -112,18 +115,6 @@ Components.Shaker = Component {
     end
 }
 
-Components.Add = Component {
-    start = function(self)
-        self.a = 0
-        self.b = 0
-    end,
-    update = function(self)
-        a = self.a or 0
-        b = self.b or 0
-        self.value = a + b
-    end
-}
-
 HOVERING_DATA = {}
 Components.Hovering = Component {
     update = function(self)
@@ -166,19 +157,6 @@ Components.Draggable = Component {
         if not love.mouse.isDown(1) and self.dragged then
             self.dragged = false
         end
-    end
-}
-
-Components.Offset = Component {
-    defaults = {
-        px = 0, py = 0, pz = 0, pw = 0,
-        x = 0, y = 0, z = 0, w = 0
-    },
-    update = function(self)
-        self.x = self.px + self.offset
-        self.y = self.py + self.offset
-        self.z = self.pz + self.offset
-        self.w = self.pw + self.offset
     end
 }
 
@@ -355,17 +333,6 @@ Components.Periodically = Component {
             local r = self.randomness * self.frequency
             self._t = self.frequency + love.math.random(-r, r)
             self.event = true
-        end
-    end
-}
-
-Components.Random = Component {
-    defaults = {
-        min = 0, max = 0
-    },
-    update = function(self)
-        for key, port in pairs(self.usage.ports) do
-            self[key] = love.math.random(self.min, self.max)
         end
     end
 }
