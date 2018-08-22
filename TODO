@@ -1,5 +1,4 @@
 Features (confident they'll be useful)
-* Port functors (x = y + 100, functions applied before reading/writing a port's value)
 * Streams (in progress)
 * Packing / unpacking port values
 ** Assigning object values to component ports whose keys / values are built of other port values
