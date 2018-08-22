@@ -10,6 +10,15 @@ Port = function(default, name)
     return output
 end
 
+FunctorPort = function(functor, args)
+    name = name or new_id()
+    return {
+        ISPORT = true,
+        functor = functor,
+        args = args
+    }
+end
+
 function is_port(t)
     return type(t) == "table" and t.ISPORT
 end
@@ -19,6 +28,23 @@ usage_mt = {
         self.ports[key] = value
     end
 }
+
+function resolve_port(instance, port)
+    -- Consts
+    if not is_port(port) then
+        return port
+    end
+
+    if port.functor then
+        local args = {}
+        for i, port in pairs(port.args) do
+            args[i] = resolve_port(instance, port)
+        end
+        return port.functor.read(unpack(args))
+    else
+        return instance.parent[port.NAME] or port.DEFAULT
+    end
+end
 
 Usage = function(ports, index)
     local c_ports = {}
@@ -40,7 +66,7 @@ Usage = function(ports, index)
             local usage = rawget(self, "usage")
             local port = usage.ports[idx]
             if port then
-                return self.parent[port.NAME] or port.DEFAULT
+                return resolve_port(self, port)
             else
                 local outval = rawget(self, idx)
                 if outval then

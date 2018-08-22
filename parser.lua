@@ -1,10 +1,11 @@
 require "portia.lib.luatext"
 require "portia.component"
+require "portia.operands"
 require "portia.lib.ml".import()
 tostring=tstring
 
 parser = MakeParser([[
-    <thingdef> := {name}(<ident>) `{` 
+    <thing> := {name}(<ident>) `{` 
     [
         {components[]}( <thinginstance> )*
     ]
@@ -12,15 +13,15 @@ parser = MakeParser([[
     <thinginstance> := {type}(<ident>) `{`
         {inputs[]}( <varline> )*
     `}`;
-    <varline> := {name}(<ident>) `=` (
-        | {val}(<constdef>)
-        | {port}(<ident>)
-    );
-    <constdef> := {}(<string> | <number> | <tabledef>);
-    <tabledef> := {tablify()}(<rawtabledef>);
-    <rawtabledef> := {emptytable()}(`{` `}`) | `{` ({[]}(<tablekv>)[`,`])+ `}`;
-    <tablekv> := {key}(<ident>) `=` {val}(<constdef>);
-    <filedef> := {[]}(<thingdef>)*;
+    <varline> := {name}(<ident>) `=` {port}(<port>);
+    <port> := {functor}(<portfunctor>) | {identity}(<ident>) | {const}(<const>);
+    <portfunctor> := {name}(<ident>) `(` {args}(<portfunctorargs>) `)`;
+    <portfunctorargs> := {[]}(<port>) (`,` {[]}(<port>))*;
+    <const> := {}(<string> | <number> | <table>);
+    <table> := {tablify()}(<rawtable>);
+    <rawtable> := {emptytable()}(`{` `}`) | `{` ({[]}(<tablekv>)[`,`])+ `}`;
+    <tablekv> := {key}(<ident>) `=` {val}(<const>);
+    <file> := {[]}(<thing>)*;
 ]])
 
 local actions = {
@@ -49,7 +50,7 @@ function get_name(parts, desired)
 end
 
 function make_composites(components, string)
-    local composites = parser("filedef", string, actions)
+    local composites = parser("file", string, actions)
     local output = {}
     for _, definition in pairs(composites) do
         local ports = {}
@@ -69,21 +70,34 @@ function make_composites(components, string)
     end
 end
 
+function make_port(parsed_port)
+    if parsed_port.const then
+        return parsed_port.const
+    end
+
+    if parsed_port.identity then
+        return Port(nil, parsed_port.identity)
+    end
+
+    if parsed_port.functor then
+        local args = {}
+        for key, value in pairs(parsed_port.functor.args) do
+            args[key] = make_port(value)
+        end
+
+        if not Operands[parsed_port.functor.name] then
+            error("No operaned named " .. parsed_port.functor.name)
+        end
+
+        return FunctorPort(Operands[parsed_port.functor.name], args)
+    end
+end
+
 function make_usage(usage, ports, components)
     local inputs = {}
     for _, input in pairs(usage.inputs) do
-        local value = nil
-        if input.val then value = input.val end
-        if input.port then
-            if ports[input.port] then
-                value = ports[input.port]
-            else
-                ports[input.port] = Port(nil, input.port)
-                value = ports[input.port]
-            end
-        end
-
-        inputs[input.name] = value
+        local port = make_port(input.port)
+        inputs[input.name] = port
     end
     if not components[usage.type] then
         error("No component named " .. usage.type)
@@ -96,7 +110,7 @@ function test()
 
     print(parser("thinginstance", "Sprite { hi = blah }"))
 
-    print(parser("filedef", [[
+    print(parser("file", [[
         SpriteMover {
             Sprite {
                 sprite = "sprite.png"
@@ -114,5 +128,9 @@ function test()
         }
     ]]))
 
-    print(parser("tabledef", "{hi = 123, sup={blarg = 123}}", actions))
+    print(parser("table", "{hi = 123, sup={blarg = 123}}", actions))
+
+    print(parser("port", "foo(hi, bar(hi))"))
+    print(parser("port", "hi_there"))
+    print(parser("varline", "asdf = add(x, 1)"))
 end
