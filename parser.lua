@@ -1,6 +1,6 @@
 require "portia.lib.luatext"
 require "portia.component"
-require "portia.operands"
+require "portia.functors"
 require "portia.lib.ml".import()
 tostring=tstring
 
@@ -85,11 +85,11 @@ function make_port(parsed_port)
             args[key] = make_port(value)
         end
 
-        if not Operands[parsed_port.functor.name] then
-            error("No operaned named " .. parsed_port.functor.name)
+        if not Functors[parsed_port.functor.name] then
+            error("No functor named " .. parsed_port.functor.name)
         end
 
-        return FunctorPort(Operands[parsed_port.functor.name], args)
+        return FunctorPort(Functors[parsed_port.functor.name], args)
     end
 end
 

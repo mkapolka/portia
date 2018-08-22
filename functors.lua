@@ -1,24 +1,24 @@
-Operands = {}
+Functors = {}
 
-Operands.add = {
+Functors.add = {
     read = function(a, b)
         return a + b
     end
 }
 
-Operands.sub = {
+Functors.sub = {
     read = function(a, b)
         return a - b
     end
 }
 
-Operands.mult = {
+Functors.mult = {
     read = function(a, b)
         return a * b
     end
 }
 
-Operands.div = {
+Functors.div = {
     read = function(a, b)
         if b == 0 then
             return 0
@@ -28,7 +28,7 @@ Operands.div = {
     end
 }
 
-Operands.random = {
+Functors.random = {
     read = function(min, max)
         local min = min or 0
         local max = max or 1
@@ -36,7 +36,7 @@ Operands.random = {
     end
 }
 
-Operands.distance = {
+Functors.distance = {
     read = function(x1, y1, x2, y2)
         local dx = x1 - x2
         local dy = y1 - y2
