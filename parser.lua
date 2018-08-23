@@ -19,8 +19,8 @@ parser = MakeParser([[
     <portfunctorargs> := {[]}(<port>) (`,` {[]}(<port>))*;
     <const> := {}(<string> | <number> | <table>);
     <table> := {tablify()}(<rawtable>);
-    <rawtable> := {emptytable()}(`{` `}`) | `{` ({[]}(<tablekv>)[`,`])+ `}`;
-    <tablekv> := {key}(<ident>) `=` {val}(<const>);
+    <rawtable> := {emptytable()}(`{` `}`) | `{` {[]}(<tablekv>) (`,` {[]}(<tablekv>))* `}`;
+    <tablekv> := {key}(<ident>) `=` {val}(<const>) | {val}(<const>);
     <file> := {[]}(<thing>)*;
 ]])
 
@@ -30,8 +30,13 @@ local actions = {
     end,
     tablify = function(obj)
         local output = {}
+        local i = 0
         for _, pair in pairs(obj) do
-            output[pair.key] = pair.val
+            if pair.key then
+                output[pair.key] = pair.val
+            else
+                table.insert(output, pair.val)
+            end
         end
         return output
     end
@@ -133,4 +138,6 @@ function test()
     print(parser("port", "foo(hi, bar(hi))"))
     print(parser("port", "hi_there"))
     print(parser("varline", "asdf = add(x, 1)"))
+
+    print(parser("const", "{1, 2, 3, key=123}", actions))
 end
