@@ -286,3 +286,66 @@ Components.Map = Component {
         end
     end
 }
+
+Components.ArrowMover = Component {
+    defaults = {
+        horizontal = 0, vertical = 0,
+        speed = 1,
+        up = 0, down = 0, left = 0, right = 0
+    },
+    update = function(self)
+        if not self.enabled then
+            return
+        end
+
+        if self.up and self.down then
+            self.vertical = 0
+        elseif self.up then
+            self.vertical = -self.speed
+        elseif self.down then
+            self.vertical = self.speed
+        else
+            self.vertical = 0
+        end
+
+        if self.right and self.left then
+            self.horizontal = 0
+        elseif self.right then
+            self.horizontal = self.speed
+        elseif self.left then
+            self.horizontal = -self.speed
+        else
+            self.horizontal = 0
+        end
+    end
+}
+
+Components.LoopWithin = Component {
+    defaults = {
+        x = 0, y = 0,
+        bx = 0, by = 0,
+        width = 800, height = 600,
+        loop_x = true, loop_y = true
+    },
+    update = function(self)
+        if self.loop_x then
+            if self.x < self.bx then
+                self.x = self.x + self.width
+            end
+
+            if self.x > self.bx + self.width then
+                self.x = self.x - self.width
+            end
+        end
+
+        if self.loop_y then
+            if self.y < self.by then
+                self.y = self.y + self.width
+            end
+
+            if self.y > self.by + self.width then
+                self.y = self.y - self.width
+            end
+        end
+    end
+}
