@@ -39,13 +39,13 @@ function resolve_port(instance, port)
         local args = {}
         for i, arg_port in pairs(port.args) do
             args[i] = resolve_port(instance, arg_port)
-            if not args[i] then
+            if args[i] == nil then
                 return port.functor.default
             end
         end
         return port.functor.read(unpack(args))
     else
-        return instance.parent[port.NAME] or port.DEFAULT
+        return instance.parent[port.NAME]
     end
 end
 

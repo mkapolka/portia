@@ -49,3 +49,16 @@ Functors.distance = {
         return math.sqrt(dx * dx + dy * dy)
     end
 }
+
+Functors.switch = {
+    default = 0,
+    read = function(...)
+        local args = {...}
+        for i=1,#args,2 do
+            local case, value = args[i], args[i+1]
+            if case then
+                return value
+            end
+        end
+    end
+}
