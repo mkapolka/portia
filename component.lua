@@ -15,7 +15,8 @@ FunctorPort = function(functor, args)
     return {
         ISPORT = true,
         functor = functor,
-        args = args
+        args = args,
+        NAME=name
     }
 end
 

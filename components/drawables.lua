@@ -68,9 +68,15 @@ Components.Sprite = Drawable {
 
 font = love.graphics.newFont(32)
 Components.Text = Drawable {
+    defaults = {
+        text = "", x = 0, y = 0, visible = true, depth = 0, color = {1, 1, 1, 1},
+    },
     draw = function(self)
         love.graphics.setFont(font)
+        love.graphics.setColor(0, 0, 0, 1)
+        --love.graphics.setColor(self.color[1], self.color[2], self.color[3], self.color[4])
         love.graphics.print(self.text or "", self.x, self.y, self.r or 0, self.sx or 1, self.sy or 1)
+        love.graphics.setColor(1, 1, 1, 1)
     end
 }
 

@@ -32,6 +32,19 @@ Functors.div = {
     end
 }
 
+Functors["and"] = {
+    read = function(a, b)
+        return a and b
+    end
+}
+
+Functors["or"] = {
+    read = function(a, b)
+        return a or b
+    end
+}
+
+
 Functors.random = {
     default = 0,
     read = function(min, max)

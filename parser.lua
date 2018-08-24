@@ -1,17 +1,17 @@
 require "portia.lib.luatext"
 require "portia.component"
 require "portia.functors"
-require "portia.lib.ml".import()
-tostring=tstring
 
 parser = MakeParser([[
     <thing> := {name}(<ident>) `{` 
     [
         {components[]}( <thinginstance> )*
     ]
+    !Expected closing bracket.!
     `}`;
     <thinginstance> := {type}(<ident>) `{`
         {inputs[]}( <varline> )*
+        !Expected closing bracket.!
     `}`;
     <varline> := {name}(<ident>) `=` {port}(<port>);
     <port> := {functor}(<portfunctor>) | {identity}(<ident>) | {const}(<const>);
@@ -19,7 +19,12 @@ parser = MakeParser([[
     <portfunctorargs> := {[]}(<port>) (`,` {[]}(<port>))*;
     <const> := {}(<string> | <number> | <table>);
     <table> := {tablify()}(<rawtable>);
-    <rawtable> := {emptytable()}(`{` `}`) | `{` {[]}(<tablekv>) (`,` {[]}(<tablekv>))* `}`;
+    <rawtable> := {emptytable()}(`{` `}`) 
+        | `{` 
+            {[]}(<tablekv>) 
+            !Error: Expected a comma!
+            (`,` {[]}(<tablekv>))* 
+          `}`;
     <tablekv> := {key}(<ident>) `=` {val}(<const>) | {val}(<const>);
     <file> := {[]}(<thing>)*;
 ]])

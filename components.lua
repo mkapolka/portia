@@ -291,7 +291,8 @@ Components.ArrowMover = Component {
     defaults = {
         horizontal = 0, vertical = 0,
         speed = 1,
-        up = 0, down = 0, left = 0, right = 0
+        up = 0, down = 0, left = 0, right = 0,
+        enabled = true
     },
     update = function(self)
         if not self.enabled then
