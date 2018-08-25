@@ -62,6 +62,7 @@ function love.keyreleased(key)
 end
 
 Components.Keyboard = Component {
+    default_order=-1000,
     update = function(self)
         for name, port in pairs(self.usage.ports) do
             local name = string.gsub(name, "_pressed$", "")

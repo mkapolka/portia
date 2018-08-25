@@ -2,6 +2,8 @@ Components = {}
 
 require "portia.component"
 require "portia.components.drawables"
+require "portia.components.beacons"
+require "portia.components.logic"
 
 Components.Shaker = Component {
     start = function(self)
@@ -120,20 +122,6 @@ Components.Sound = Component {
     end
 }
 
-Components.Timer = Component {
-    defaults = {
-        _t = 0, time = 1
-    },
-    update = function(self)
-        if self.restart then
-            self._t = self.time
-        end
-        self._t = self._t - love.timer.getDelta()
-        self.done = self._t < 0
-        self.not_done = not self.done
-    end
-}
-
 Components.Tween = Component {
     defaults = {
         from = 0, to = 1,
@@ -207,38 +195,12 @@ Components.Movable = Component {
         x = 0, y = 0,
         vx = 0, vy = 0,
         ax = 0, ay = 0,
-        dx = 0, dy = 0
     },
     update = function(self)
         self.vx = self.vx + self.ax
         self.vy = self.vy + self.ay
         self.x = self.x + self.vx
         self.y = self.y + self.vy
-        self.vx = self.vx * (1 / self.dx)
-        self.vy = self.vy * (1 / self.dy)
-    end
-}
-
-Components.Periodically = Component {
-    defaults = {
-        frequency = 1,
-        randomness = 0,
-        event = 0,
-    },
-    start = function(self)
-        self._t = self.frequency
-    end,
-    update = function(self)
-        if self.event then
-            self.event = false
-        end
-
-        self._t = self._t - love.timer.getDelta();
-        if self._t < 0 then
-            local r = self.randomness * self.frequency
-            self._t = self.frequency + love.math.random(-r, r)
-            self.event = true
-        end
     end
 }
 

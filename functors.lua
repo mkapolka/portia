@@ -44,6 +44,12 @@ Functors["or"] = {
     end
 }
 
+Functors["not"] = {
+    read = function(a)
+        return not a
+    end
+}
+
 
 Functors.random = {
     default = 0,

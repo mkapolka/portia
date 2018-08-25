@@ -90,3 +90,60 @@ function draw_everything()
         end
     end
 end
+
+Components.Animations = Drawable {
+    defaults = {
+        animations = {},
+        file = "",
+        current = "",
+        x = 0, y = 0, ox = 0, oy = 0, r = 0, sx = 1, sy = 1,
+        width = 32, height = 32,
+        visible = true
+    },
+    start = function(self)
+        local sprite = get_sprite(self.file)
+        self._current_frame = 1
+        self._current_t = 0
+        self._previous_animation = self.current
+    end,
+    update = function(self)
+        if self._previous_animation ~= self.current then
+            self._previous_animation = self.current
+            self._current_t = 0
+            self._current_frame = 1
+        end
+
+        if self.animations[self.current] then
+            -- Update frame number
+            local animation = self.animations[self.current]
+            self._current_t = self._current_t + love.timer.getDelta()
+            if self._current_t > 1.0 / (animation.speed or 60) then
+                self._current_t = 0 
+                self._current_frame = (self._current_frame + 1) % #animation.frames
+                if self._current_frame == 0 then
+                    self._current_frame = 1
+                end
+            end
+        end
+    end,
+    draw = function(self)
+        if self.animations[self.current] then
+            local animation = self.animations[self.current]
+            local sprite = get_sprite(self.file)
+            local fn = animation.frames[self._current_frame] - 1
+            local frames_wide = sprite:getWidth() / self.width
+            local fy = math.floor(fn / frames_wide)
+            local quad = love.graphics.newQuad(
+                fn * self.width % sprite:getWidth(),
+                fy * self.height,
+                self.width,
+                self.height,
+                sprite:getDimensions()
+            )
+            love.graphics.draw(sprite, quad, self.x, self.y, self.r, self.sx, self.sy, self.ox, self.oy)
+        else
+            local sprite = get_sprite(self.file)
+            love.graphics.draw(sprite, self.x, self.y, self.r)
+        end
+    end
+}

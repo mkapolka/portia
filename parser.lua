@@ -14,10 +14,10 @@ parser = MakeParser([[
         !Expected closing bracket.!
     `}`;
     <varline> := {name}(<ident>) `=` {port}(<port>);
-    <port> := {functor}(<portfunctor>) | {identity}(<ident>) | {const}(<const>);
+    <port> := {const}(<const>) | {functor}(<portfunctor>) | {identity}(<ident>);
     <portfunctor> := {name}(<ident>) `(` {args}(<portfunctorargs>) `)`;
     <portfunctorargs> := {[]}(<port>) (`,` {[]}(<port>))*;
-    <const> := {}(<string> | <number> | <table>);
+    <const> := {}(<string> | <number> | `false` | `true` | <table>);
     <table> := {tablify()}(<rawtable>);
     <rawtable> := {emptytable()}(`{` `}`) 
         | `{` 
@@ -37,10 +37,13 @@ local actions = {
         local output = {}
         local i = 0
         for _, pair in pairs(obj) do
+            local value = pair.val
+            if value == "true" then value = true end
+            if value == "false" then value = false end
             if pair.key then
-                output[pair.key] = pair.val
+                output[pair.key] = value
             else
-                table.insert(output, pair.val)
+                table.insert(output, value)
             end
         end
         return output
@@ -82,6 +85,9 @@ end
 
 function make_port(parsed_port)
     if parsed_port.const then
+        local value = parsed_port.const
+        if value == "true" then return true end
+        if value == "false" then return false end
         return parsed_port.const
     end
 
