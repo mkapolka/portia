@@ -5,6 +5,7 @@ Features (confident they'll be useful)
 ** i.e. Thing {data = {key1 = port1, key2 = port2}}, Thing2 {position = port1}
 
 Improvements (bug fixes, quality of life improvements, etc)
+* Unit Tests
 * Move to a more data-driven model w/ more explicitly defined & documented structures (Usage, Definition, Instance, etc).
 ** Needed for doing real-time editing
 ** Switch composites to take definitions rather than the current function approach (see 1)
