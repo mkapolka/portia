@@ -6,13 +6,19 @@ require "love"
 local Root = nil
 local root_instance = nil
 
+WORLD = nil
+
 function love.load()
+    love.physics.setMeter(64)
+    WORLD = love.physics.newWorld(0, 0)
+
     root_instance = Root():instantiate()
     root_instance:start()
 end
 
 MOUSE_CLICKED = false
-function love.update()
+function love.update(dt)
+    WORLD:update(dt)
     root_instance:update()
     for _, component in pairs(Components) do
         if type(component) == "table" and component.static_update then

@@ -4,6 +4,7 @@ require "portia.component"
 require "portia.components.drawables"
 require "portia.components.beacons"
 require "portia.components.logic"
+require "portia.components.physics"
 
 Components.Shaker = Component {
     start = function(self)

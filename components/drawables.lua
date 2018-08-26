@@ -147,3 +147,14 @@ Components.Animations = Drawable {
         end
     end
 }
+
+Components.DebugBox = Drawable {
+    defaults = {
+        x = 0, y = 0, width = 100, height = 100, color = {255, 255, 255, 255}, depth = -100, visible = true
+    },
+    draw = function(self)
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.rectangle("line", self.x, self.y, self.width, self.height)
+        love.graphics.setColor(1, 1, 1, 1)
+    end
+}
