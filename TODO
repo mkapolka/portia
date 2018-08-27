@@ -1,6 +1,7 @@
 Features (confident they'll be useful)
 * Streams (in progress)
 * Packing / unpacking port values
+** Partially done - reads work but not writes
 ** Assigning object values to component ports whose keys / values are built of other port values
 ** i.e. Thing {data = {key1 = port1, key2 = port2}}, Thing2 {position = port1}
 

@@ -1,32 +1,47 @@
 require "portia.lib.luatext"
 require "portia.component"
+require "portia.definition"
 require "portia.functors"
 
+require "portia.lib.ml".import()
+tostring=tstring
+
 parser = MakeParser([[
-    <thing> := {name}(<ident>) `{` 
-    [
-        {components[]}( <thinginstance> )*
-    ]
+    <composite> := {name}(<ident>) {definition}(<definition>);
+
+    <definition> := 
+    !Expected definition.!
+    `{`
+    [ {components[]}( <usage> )* ]
     !Expected closing bracket.!
     `}`;
-    <thinginstance> := {type}(<ident>) `{`
+
+    <usage> := {type}(<ident>) `{`
         {inputs[]}( <varline> )*
         !Expected closing bracket.!
     `}`;
+
     <varline> := {name}(<ident>) `=` {port}(<port>);
-    <port> := {const}(<const>) | {functor}(<portfunctor>) | {identity}(<ident>);
+    <port> := {dyntable}(<dyntable>) | {const}(<const>) | {functor}(<portfunctor>) | {identity}(<ident>);
     <portfunctor> := {name}(<ident>) `(` {args}(<portfunctorargs>) `)`;
     <portfunctorargs> := {[]}(<port>) (`,` {[]}(<port>))*;
     <const> := {}(<string> | <number> | `false` | `true` | <table>);
+
     <table> := {tablify()}(<rawtable>);
     <rawtable> := {emptytable()}(`{` `}`) 
         | `{` 
             {[]}(<tablekv>) 
-            !Error: Expected a comma!
             (`,` {[]}(<tablekv>))* 
           `}`;
     <tablekv> := {key}(<ident>) `=` {val}(<const>) | {val}(<const>);
-    <file> := {[]}(<thing>)*;
+
+    <dyntable> := `{`
+    ( {[]}(<dyntablekv>) | {[]}(<tablekv>) )
+    ( (`,` {[]}(<tablekv>)) | (`,` {[]}(<dyntablekv>)) )*
+    `}`;
+    <dyntablekv> := {key}(<ident>) `=` {port}(<port>) | {port}(<port>);
+
+    <file> := {[]}(<composite>)*;
 ]])
 
 local actions = {
@@ -47,7 +62,7 @@ local actions = {
             end
         end
         return output
-    end
+    end,
 }
 
 function get_name(parts, desired)
@@ -62,24 +77,22 @@ function get_name(parts, desired)
     end
 end
 
-function make_composites(components, string)
+function make_composites(Components, string)
     local composites = parser("file", string, actions)
     local output = {}
-    for _, definition in pairs(composites) do
+    for _, p_composite in pairs(composites) do
         local ports = {}
-        local name = definition.name
+        local name = p_composite.name
         local parts = {}
-        for _, component in pairs(definition.components) do
-            local usage = make_usage(component, ports, components)
+        for _, component in pairs(p_composite.definition.components) do
+            local usage = make_usage(component, ports, Components)
             parts[get_name(parts, component.type)] = usage
         end
 
-        local composite = Composite(function(c)
-            for name, usage in pairs(parts) do
-                c[name] = usage
-            end
-        end)
-        components[definition.name] = composite
+        local definition = Definition(parts)
+
+        local composite = Composite(definition)
+        Components[p_composite.name] = composite
     end
 end
 
@@ -107,6 +120,31 @@ function make_port(parsed_port)
 
         return FunctorPort(Functors[parsed_port.functor.name], args)
     end
+
+    if parsed_port.dyntable then
+        local args = {}
+        local i = 1
+        local j = 1
+        for _, v in ipairs(parsed_port.dyntable) do
+            local key = v.key
+            if not key then
+                key = i
+                i = i + 1
+            end
+
+            local value = nil
+            if v.val then
+                value = v.val
+            else
+                value = make_port(v.port)
+            end
+
+            args[j] = key
+            args[j+1] = value
+            j = j + 2
+        end
+        return FunctorPort(Functors.table, args)
+    end
 end
 
 function make_usage(usage, ports, components)
@@ -124,7 +162,7 @@ end
 function test()
     print(parser("varline", 'foo = sprite.hax'))
 
-    print(parser("thinginstance", "Sprite { hi = blah }"))
+    print(parser("usage", "Sprite { hi = blah }"))
 
     print(parser("file", [[
         SpriteMover {
@@ -151,4 +189,6 @@ function test()
     print(parser("varline", "asdf = add(x, 1)"))
 
     print(parser("const", "{1, 2, 3, key=123}", actions))
+
+    print(parser("dyntable", "{key=port, port2, key2=123}", actions))
 end

@@ -81,3 +81,15 @@ Functors.switch = {
         end
     end
 }
+
+Functors.table = {
+    default = {},
+    read = function(...)
+        local output = {}
+        local args = {...}
+        for i=1,#args,2 do
+            output[args[i]] = args[i+1]
+        end
+        return output
+    end
+}

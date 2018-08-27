@@ -120,23 +120,7 @@ Usage = function(ports, index)
     return output
 end
 
-Composite = function(f)
-    local components = {}
-    f(components)
-    local sorted = {}
-    for key, component in pairs(components) do
-        table.insert(sorted, key)
-    end
-    function get_order(e)
-        return components[e].order or 0
-    end
-    table.sort(sorted, function(a, b) return get_order(a) < get_order(b) end)
-
-    local definition = {
-        components = components,
-        sorted = sorted
-    }
-
+Composite = function(definition)
     local index = {
         definition = definition,
         visit = function(self, method_name)
@@ -153,9 +137,6 @@ Composite = function(f)
                 self.children[key] = comp_instance
             end
         end,
-        start = function(self)
-            self:visit("start")
-        end,
         destroy = function(self)
             self:visit("destroy")
         end,
@@ -164,9 +145,6 @@ Composite = function(f)
         end,
         update = function(self)
             self:visit("update")
-        end,
-        draw = function(self)
-            self:visit("draw")
         end
     }
 
