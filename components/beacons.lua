@@ -8,7 +8,11 @@ Components.Beacon = Component {
         data = "",
     },
     start = function(self)
-        table.insert(BEACONS, self)
+        self._id = new_id()
+        BEACONS[self._id] = self
+    end,
+    destroy = function(self)
+        BEACONS[self._id] = nil
     end
 }
 
@@ -23,12 +27,14 @@ Components.NearestBeacon = Component {
         local x = self.x
         local y = self.y
         for _, beacon in pairs(BEACONS) do
-            local dx = beacon.x - x
-            local dy = beacon.y - y
-            local d = math.sqrt(dx * dx + dy * dy)
-            if d < self.within and d < ld then
-                lb = beacon
-                ld = d
+            if beacon.tag == self.tag then
+                local dx = beacon.x - x
+                local dy = beacon.y - y
+                local d = math.sqrt(dx * dx + dy * dy)
+                if d < self.within and d < ld then
+                    lb = beacon
+                    ld = d
+                end
             end
         end
 

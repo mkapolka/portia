@@ -5,6 +5,7 @@ require "portia.components.drawables"
 require "portia.components.beacons"
 require "portia.components.logic"
 require "portia.components.physics"
+require "portia.components.containers"
 
 Components.Shaker = Component {
     start = function(self)
@@ -151,46 +152,6 @@ Components.Quit = Component {
     end
 }
 
-Components.Spawner = function(ports)
-    local class = ports.class
-    ports.class = nil
-    local index = {
-        child_usage = Components[class](),
-        oninstantiate = function(self)
-            self.children = {}
-        end,
-        update = function(self)
-            if self.trigger then
-                local child = self.child_usage:instantiate(self)
-                table.insert(self.children, child)
-                for key, value in pairs(ports) do
-                    child[key] = self[key]
-                end
-                child:start()
-            end
-
-            to_remove = {}
-            for i = #self.children,1,-1 do
-                local child = self.children[i]
-                child:update()
-
-                if child[self.destroy_on] then
-                    child:destroy()
-                    table.remove(self.children, i)
-                end
-            end
-        end,
-        destroy = function(self)
-            for _, child in pairs(self.children) do
-                if child.destroy then
-                    child:destroy()
-                end
-            end
-        end
-    }
-    return Usage(ports, index)
-end
-
 Components.Movable = Component {
     defaults = {
         x = 0, y = 0,
@@ -202,51 +163,6 @@ Components.Movable = Component {
         self.vy = self.vy + self.ay
         self.x = self.x + self.vx
         self.y = self.y + self.vy
-    end
-}
-
-Components.TileMap = Drawable {
-    defaults = {
-        visible = true,
-        depth=1000,
-    },
-    draw = function(self)
-        self.map:draw(-CAMERA.x, -CAMERA.y)
-    end
-}
-
-Components.Map = Component {
-    start = function(self)
-        self.children = {}
-        local map = sti(self.file)
-        local tm = Components.TileMap():instantiate(self)
-        tm.map = map
-        tm.depth = 1000
-        table.insert(self.children, tm)
-
-        local usages = {}
-
-        for id, object in pairs(map.objects) do
-            if not Components[object.type] then
-                error("No component named " .. object.type)
-            end
-            local usage = usages[object.type] or Components[object.type]()
-            local child = usage:instantiate()
-            child.x = object.x
-            child.y = object.y
-            for key, value in pairs(object.properties) do
-                child[key] = value
-            end
-            table.insert(self.children, child)
-            child:start()
-        end
-    end,
-    update = function(self)
-        for _, child in pairs(self.children) do
-            if child.update then
-                child:update()
-            end
-        end
     end
 }
 

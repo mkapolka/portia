@@ -12,7 +12,7 @@ function love.load()
     love.physics.setMeter(64)
     WORLD = love.physics.newWorld(0, 0)
 
-    root_instance = Root():instantiate()
+    root_instance = Usage({}, Root):instantiate()
     root_instance:start()
 end
 

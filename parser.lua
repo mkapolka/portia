@@ -1,5 +1,5 @@
 require "portia.lib.luatext"
-require "portia.component"
+require "portia.components"
 require "portia.definition"
 require "portia.functors"
 
@@ -91,7 +91,7 @@ function make_composites(Components, string)
 
         local definition = Definition(parts)
 
-        local composite = Composite(definition)
+        local composite = Components.Composite(definition)
         Components[p_composite.name] = composite
     end
 end
@@ -156,7 +156,7 @@ function make_usage(usage, ports, components)
     if not components[usage.type] then
         error("No component named " .. usage.type)
     end
-    return components[usage.type](inputs)
+    return Usage(inputs, components[usage.type])
 end
 
 function test()

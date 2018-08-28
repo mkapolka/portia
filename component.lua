@@ -54,7 +54,7 @@ Usage = function(ports, index)
     local c_ports = {}
     local c_consts = {}
 
-    local order = ports.order or 0
+    local order = ports.order or index.default_order or 0
     ports.order = nil
 
     for key, input in pairs(ports or {}) do
@@ -120,46 +120,6 @@ Usage = function(ports, index)
     return output
 end
 
-Composite = function(definition)
-    local index = {
-        definition = definition,
-        visit = function(self, method_name)
-            for _, child in pairs(self.children) do
-                if child[method_name] then
-                    child[method_name](child)
-                end
-            end
-        end,
-        oninstantiate = function(self)
-            self.children = {}
-            for key, usage in pairs(self.definition.components) do
-                local comp_instance = usage:instantiate(self)
-                self.children[key] = comp_instance
-            end
-        end,
-        destroy = function(self)
-            self:visit("destroy")
-        end,
-        start = function(self)
-            self:visit("start")
-        end,
-        update = function(self)
-            self:visit("update")
-        end
-    }
-
-    return Component(index)
-end
-
 Component = function(index)
-    local mt = {
-        __call = function(self, args)
-            local args = args or {}
-            args.order = args.order or index.default_order
-            return Usage(args, index)
-        end
-    }
-    local output = index
-    setmetatable(output, mt)
-    return output
+    return index
 end

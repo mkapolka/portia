@@ -10,6 +10,10 @@ Components.PhysicsWall = Component {
     end,
     update = function(self)
         self.body:setPosition(self.x, self.y)
+    end,
+    destroy = function(self)
+        self.body:destroy()
+        self.shape:release()
     end
 }
 
@@ -26,6 +30,10 @@ Components.OverlappableRegion = Component {
     end,
     update = function(self)
         self.body:setPosition(self.x, self.y)
+    end,
+    destroy = function(self)
+        self.body:destroy()
+        self.shape:release()
     end
 }
 
@@ -46,5 +54,9 @@ Components.SolidThing = Component {
         self.body:setAngle(0)
         self.body:setAngularVelocity(0)
         self.x, self.y = self.body:getPosition()
+    end,
+    destroy = function(self)
+        self.body:destroy()
+        self.shape:release()
     end
 }

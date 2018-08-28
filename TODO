@@ -22,6 +22,8 @@ Improvements (bug fixes, quality of life improvements, etc)
 * Hybrid components: components with built in sub-components
 
 To Research (experimental ideas that might or might not pan out)
+* A mechanism like ports for containers to query into children correctly
+** I.e. how spawners look into a value to see when to delete an object
 * Flattening instance hierarchy
 ** I.e. Instead of an instance being {"Sprite": {state, state}, "Mouse": {state, state}, "SubComponent": {"Thing": {state}}}, it would be a flat structure {"Sprite/state1": "value", "Sprite/state2"}
 ** Relative links would be handled at usage level rather than needing any instance-level info
