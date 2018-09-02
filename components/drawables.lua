@@ -70,12 +70,12 @@ font = love.graphics.newFont(32)
 Components.Text = Drawable {
     defaults = {
         text = "", x = 0, y = 0, visible = true, depth = 0, color = {1, 1, 1, 1},
+        width = 800, align = "left"
     },
     draw = function(self)
         love.graphics.setFont(font)
-        love.graphics.setColor(0, 0, 0, 1)
-        --love.graphics.setColor(self.color[1], self.color[2], self.color[3], self.color[4])
-        love.graphics.print(self.text or "", self.x, self.y, self.r or 0, self.sx or 1, self.sy or 1)
+        love.graphics.setColor(self.color[1], self.color[2], self.color[3], self.color[4])
+        love.graphics.printf(self.text or "", self.x, self.y, self.width, self.align, self.r or 0, self.sx or 1, self.sy or 1)
         love.graphics.setColor(1, 1, 1, 1)
     end
 }
@@ -98,10 +98,10 @@ Components.Animations = Drawable {
         current = "",
         x = 0, y = 0, ox = 0, oy = 0, r = 0, sx = 1, sy = 1,
         width = 32, height = 32,
+        color = {1, 1, 1, 1},
         visible = true
     },
     start = function(self)
-        local sprite = get_sprite(self.file)
         self._current_frame = 1
         self._current_t = 0
         self._previous_animation = self.current
@@ -119,7 +119,8 @@ Components.Animations = Drawable {
             self._current_t = self._current_t + love.timer.getDelta()
             if self._current_t > 1.0 / (animation.speed or 60) then
                 self._current_t = 0 
-                self._current_frame = (self._current_frame + 1) % #animation.frames
+
+                self._current_frame = (self._current_frame + 1) % (#animation.frames + 1)
                 if self._current_frame == 0 then
                     self._current_frame = 1
                 end
@@ -140,7 +141,9 @@ Components.Animations = Drawable {
                 self.height,
                 sprite:getDimensions()
             )
+            love.graphics.setColor(self.color)
             love.graphics.draw(sprite, quad, self.x, self.y, self.r, self.sx, self.sy, self.ox, self.oy)
+            love.graphics.setColor({1, 1, 1, 1})
         else
             local sprite = get_sprite(self.file)
             love.graphics.draw(sprite, self.x, self.y, self.r)

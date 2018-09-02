@@ -56,7 +56,7 @@ Functors.random = {
     read = function(min, max)
         local min = min or 0
         local max = max or 1
-        return love.math.random(min, max)
+        return min + love.math.random() * max
     end
 }
 
@@ -82,6 +82,19 @@ Functors.switch = {
     end
 }
 
+Functors.case = {
+    read = function(q, ...)
+        local args = {...}
+        for i=1,#args,2 do
+            local v, r = args[i], args[i+1]
+            if q == v then
+                return r
+            end
+        end
+        return args[i]
+    end
+}
+
 Functors.table = {
     default = {},
     read = function(...)
@@ -91,5 +104,12 @@ Functors.table = {
             output[args[i]] = args[i+1]
         end
         return output
+    end
+}
+
+Functors.print = {
+    read = function(a)
+        print(a)
+        return a
     end
 }

@@ -21,14 +21,21 @@ Components.Toggle = Component {
 -- returns whether it's <done> or <not_done>(deprecated- use not(done))
 Components.Timer = Component {
     defaults = {
-        _t = 0, time = 1, restart = false
+        _t = 0, time = 1, restart = false, start_on=false, done = true, not_done = false
     },
+    start = function(self)
+        if self.start_on then
+            self._t = self.time
+            self.done = false
+            self.not_done = true
+        end
+    end,
     update = function(self)
         if self.restart then
             self._t = self.time
         end
         self._t = self._t - love.timer.getDelta()
-        self.done = self._t < 0
+        self.done = self._t <= 0
         self.not_done = not self.done
     end
 }
@@ -57,14 +64,41 @@ Components.Periodically = Component {
     end
 }
 
--- Stores <input> to <data> whenever <when> is true.
+-- Stores <input> to <value> whenever <when> is true.
 Components.Store = Component {
     defaults = {
-        input = 0, data = 0, when = false
+        input = nil, value = nil, when = false, initial = false, initial_value = nil
     },
+    start = function(self)
+        if self.initial_value ~= nil then
+            self.value = self.initial_value
+        end
+
+        if self.initial then
+            self.value = self.input
+        end
+    end,
     update = function(self)
         if self.when then
-            self.data = self.input
+            self.value = self.input
         end
     end
+}
+
+Components.Once = Component {
+    default_order = -1,
+    defaults = {
+        when = false, value = false
+    },
+    start = function(self)
+        self._triggered = false
+    end,
+    update = function(self)
+        self.value = false
+        if self.when and not self._triggered then
+            self.value = true
+            self._triggered = true
+        end
+    end
+
 }

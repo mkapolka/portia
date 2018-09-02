@@ -26,6 +26,19 @@ Container = function(index)
     index.destroy = index.destroy or function(self)
         destroy_children(self.children)
     end
+    index.add_child = index.add_child or function(self, child)
+        table.insert(self.children, child)
+    end
+    index.destroy_child = index.destroy_child or function(self, child)
+        for k, v in pairs(self.children) do
+            if v == child then
+                table.remove(self.children, k)
+                if v.destroy then
+                    v:destroy()
+                end
+            end
+        end
+    end
     return Component(index)
 end
 
@@ -36,52 +49,63 @@ Components.Composite = function(definition)
             self.children = {}
             for key, usage in pairs(self.definition.components) do
                 local comp_instance = usage:instantiate(self)
-                self.children[key] = comp_instance
             end
         end,
     }
     return Container(index)
 end
 
-Components.Spawner = function(ports)
-    local class = ports.class
-    ports.class = nil
-    local index = {
-        child_usage = Components[class](),
-        oninstantiate = function(self)
-            self.children = {}
-        end,
-        update = function(self)
-            if self.trigger then
-                local child = self.child_usage:instantiate(self)
-                table.insert(self.children, child)
-                for key, value in pairs(ports) do
-                    child[key] = self[key]
-                end
-                child:start()
-            end
+Components.Destroyable = Container {
+    defaults = {
+        when = false, what = nil
+    },
+    oninstantiate = function(self)
+        self.children = {}
+        self.what:instantiate(self)
+    end,
+    update = function(self)
+        self:visit("update")
+        if self.when then
+            self.child:destroy()
+        end
+    end
+}
 
-            to_remove = {}
-            for i = #self.children,1,-1 do
-                local child = self.children[i]
-                child:update()
-
-                if child[self.destroy_on] then
-                    child:destroy()
-                    table.remove(self.children, i)
-                end
+Components.Spawner = Container {
+    defaults = {
+        what = nil, values={}, when = false
+    },
+    oninstantiate = function(self)
+        self.children = {}
+    end,
+    update = function(self)
+        if self.when then
+            local child = self.what:instantiate(self)
+            for key, value in pairs(self.values) do
+                child[key] = value
             end
-        end,
-        destroy = function(self)
-            for _, child in pairs(self.children) do
-                if child.destroy then
-                    child:destroy()
-                end
+            child:start()
+        end
+
+        self:visit("update")
+
+        to_remove = {}
+        for i = #self.children,1,-1 do
+            local child = self.children[i]
+
+            if child[self.destroy_when] then
+                child:destroy()
             end
         end
-    }
-    return Usage(ports, index)
-end
+    end,
+    destroy = function(self)
+        for _, child in pairs(self.children) do
+            if child.destroy then
+                child:destroy()
+            end
+        end
+    end
+}
 
 Components.TileMap = Drawable {
     defaults = {
@@ -95,31 +119,31 @@ Components.TileMap = Drawable {
 
 local LOADMAP = nil
 
-Components.Map = Component {
+Components.Map = Container {
     load_map = function(self, map)
         destroy_children(self.children)
 
         local map = STI(map)
-        local tm = Usage({}, Components.TileMap):instantiate(self)
-        tm.map = map
-        tm.depth = 1000
+        --local tm = Usage({}, Components.TileMap):instantiate(self)
+        --tm.map = map
+        --tm.depth = 1000
         table.insert(self.children, tm)
 
         local usages = {}
 
         for id, object in pairs(map.objects) do
-            if not Components[object.type] then
-                error("No component named " .. object.type)
+            if object.type and object.type ~= "" then
+                if not Components[object.type] then
+                    error("No component named " .. object.type)
+                end
+                local usage = usages[object.type] or Usage({}, Components[object.type])
+                local child = usage:instantiate(self)
+                child.x = object.x
+                child.y = object.y
+                for key, value in pairs(object.properties) do
+                    child[key] = value
+                end
             end
-            local usage = usages[object.type] or Usage({}, Components[object.type])
-            local child = usage:instantiate()
-            child.x = object.x
-            child.y = object.y
-            for key, value in pairs(object.properties) do
-                child[key] = value
-            end
-            table.insert(self.children, child)
-            child:start()
         end
     end,
     oninstantiate = function(self)
@@ -132,11 +156,7 @@ Components.Map = Component {
             LOADMAP = nil
         end
 
-        for _, child in pairs(self.children) do
-            if child.update then
-                child:update()
-            end
-        end
+        self:visit("update")
     end
 }
 

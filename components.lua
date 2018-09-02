@@ -6,6 +6,7 @@ require "portia.components.beacons"
 require "portia.components.logic"
 require "portia.components.physics"
 require "portia.components.containers"
+require "portia.components.bullets"
 
 Components.Shaker = Component {
     start = function(self)
@@ -154,15 +155,17 @@ Components.Quit = Component {
 
 Components.Movable = Component {
     defaults = {
-        x = 0, y = 0,
-        vx = 0, vy = 0,
-        ax = 0, ay = 0,
+        x = 0, y = 0, r = 0,
+        vx = 0, vy = 0, vr = 0,
+        ax = 0, ay = 0, ar = 0
     },
     update = function(self)
         self.vx = self.vx + self.ax
         self.vy = self.vy + self.ay
+        self.vr = self.vr + self.ar
         self.x = self.x + self.vx
         self.y = self.y + self.vy
+        self.r = self.r + self.vr
     end
 }
 
@@ -208,24 +211,64 @@ Components.LoopWithin = Component {
         loop_x = true, loop_y = true
     },
     update = function(self)
+        self.looped_x = false
+        self.looped_y = false
+        self.looped = false
+
         if self.loop_x then
             if self.x < self.bx then
                 self.x = self.x + self.width
+                self.looped_x = true
             end
 
             if self.x > self.bx + self.width then
                 self.x = self.x - self.width
+                self.looped_x = true
             end
         end
 
         if self.loop_y then
             if self.y < self.by then
-                self.y = self.y + self.width
+                self.y = self.y + self.height
+                self.looped_y = true
             end
 
-            if self.y > self.by + self.width then
-                self.y = self.y - self.width
+            if self.y > self.by + self.height then
+                self.y = self.y - self.height
+                self.looped_y = true
             end
+        end
+
+        if self.looped_x or self.looped_y then
+            self.looped = true
+        end
+    end
+}
+
+Components.DestroySelf = Component {
+    defaults = {
+        when = false
+    },
+    update = function(self)
+        if self.when then
+            self.parent.parent:destroy_child(self.parent)
+        end
+    end
+}
+
+Components.ReplaceMeWith = Component {
+    defaults = {
+        what = nil, when = false, values = {}
+    },
+    update = function(self)
+        if self.when then
+            local replacement = self.what:instantiate(self.parent.parent)
+            for k, v in pairs(self.values) do
+                replacement[k] = v
+            end
+            replacement:start()
+            self.parent.parent:destroy_child(self.parent)
+            self.parent:destroy()
         end
     end
 }

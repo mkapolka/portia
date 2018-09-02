@@ -1,5 +1,5 @@
 require "portia.lib.luatext"
-require "portia.components"
+--require "portia.components"
 require "portia.definition"
 require "portia.functors"
 
@@ -13,19 +13,19 @@ parser = MakeParser([[
     !Expected definition.!
     `{`
     [ {components[]}( <usage> )* ]
-    !Expected closing bracket.!
+    !Expected closing bracket in definition.!
     `}`;
 
     <usage> := {type}(<ident>) `{`
         {inputs[]}( <varline> )*
-        !Expected closing bracket.!
+        !Expected closing bracket in usage.!
     `}`;
 
     <varline> := {name}(<ident>) `=` {port}(<port>);
     <port> := {dyntable}(<dyntable>) | {const}(<const>) | {functor}(<portfunctor>) | {identity}(<ident>);
     <portfunctor> := {name}(<ident>) `(` {args}(<portfunctorargs>) `)`;
     <portfunctorargs> := {[]}(<port>) (`,` {[]}(<port>))*;
-    <const> := {}(<string> | <number> | `false` | `true` | <table>);
+    <const> := {}(<string> | <number> | `false` | `true` | <table>) | {usage}(<usage>);
 
     <table> := {tablify()}(<rawtable>);
     <rawtable> := {emptytable()}(`{` `}`) 
@@ -36,10 +36,12 @@ parser = MakeParser([[
     <tablekv> := {key}(<ident>) `=` {val}(<const>) | {val}(<const>);
 
     <dyntable> := `{`
-    ( {[]}(<dyntablekv>) | {[]}(<tablekv>) )
-    ( (`,` {[]}(<tablekv>)) | (`,` {[]}(<dyntablekv>)) )*
+    ( {[]}(<dyntableentry>) | {[]}(<tablekv>) )
+    ( (`,` {[]}(<tablekv>)) | (`,` {[]}(<dyntableentry>)) )*
     `}`;
-    <dyntablekv> := {key}(<ident>) `=` {port}(<port>) | {port}(<port>);
+    <dyntableentry> := <dyntablekv> | <dyntablev>;
+    <dyntablev> := {port}(<port>);
+    <dyntablekv> := {key}(<ident>) `=` {port}(<port>);
 
     <file> := {[]}(<composite>)*;
 ]])
@@ -101,6 +103,12 @@ function make_port(parsed_port)
         local value = parsed_port.const
         if value == "true" then return true end
         if value == "false" then return false end
+        if type(value) == "table" and value.usage then
+            return make_usage(value.usage, {}, Components)
+        end
+        if type(value) == "string" then
+            value = string.gsub(value, "\\n", "\n")
+        end
         return parsed_port.const
     end
 
@@ -149,9 +157,11 @@ end
 
 function make_usage(usage, ports, components)
     local inputs = {}
-    for _, input in pairs(usage.inputs) do
-        local port = make_port(input.port)
-        inputs[input.name] = port
+    if usage.inputs then
+        for _, input in pairs(usage.inputs) do
+            local port = make_port(input.port)
+            inputs[input.name] = port
+        end
     end
     if not components[usage.type] then
         error("No component named " .. usage.type)
@@ -191,4 +201,6 @@ function test()
     print(parser("const", "{1, 2, 3, key=123}", actions))
 
     print(parser("dyntable", "{key=port, port2, key2=123}", actions))
+    print(parser("dyntable", "{1, 1, 1, random(.8, 1)}", actions))
+    print(parser("const", "Thing {x = x}", actions))
 end

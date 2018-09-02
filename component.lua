@@ -95,7 +95,7 @@ Usage = function(ports, index)
         ports = c_ports or {},
         consts = c_consts,
         order = order,
-        instantiate = function(self, parent)
+        instantiate = function(self, parent, instance_index)
             local output = {parent=parent, usage=self}
             setmetatable(output, instance_mt)
 
@@ -103,10 +103,20 @@ Usage = function(ports, index)
                 output[key] = value
             end
 
+            if instance_index then
+                for key, value in pairs(instance_index) do
+                    output[key] = value
+                end
+            end
+
             for key, value in pairs(index.defaults or {}) do
                 if not output[key] then
                     output[key] = value
                 end
+            end
+
+            if parent then
+                parent:add_child(output)
             end
 
             if output.oninstantiate then
