@@ -99,7 +99,8 @@ Components.Animations = Drawable {
         x = 0, y = 0, ox = 0, oy = 0, r = 0, sx = 1, sy = 1,
         width = 32, height = 32,
         color = {1, 1, 1, 1},
-        visible = true
+        visible = true,
+        looped = false
     },
     start = function(self)
         self._current_frame = 1
@@ -107,6 +108,8 @@ Components.Animations = Drawable {
         self._previous_animation = self.current
     end,
     update = function(self)
+        self.looped = false
+
         if self._previous_animation ~= self.current then
             self._previous_animation = self.current
             self._current_t = 0
@@ -123,6 +126,7 @@ Components.Animations = Drawable {
                 self._current_frame = (self._current_frame + 1) % (#animation.frames + 1)
                 if self._current_frame == 0 then
                     self._current_frame = 1
+                    self.looped = true
                 end
             end
         end

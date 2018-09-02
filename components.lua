@@ -84,7 +84,7 @@ Components.Clickable = Component {
             and self.y < love.mouse.getY() and self.y + self.height > love.mouse.getY())
     end,
     update = function(self)
-        self.click = 0
+        self.click = false
         if self:mouseIsIn() then
             self.hovering = true
             HOVERING_DATA.data = self.data
@@ -95,8 +95,8 @@ Components.Clickable = Component {
             HOVERING_DATA.hovering = false
         end
 
-        if love.mouse.isDown(1) and self:mouseIsIn() then
-            self.click = 1
+        if not self.down and love.mouse.isDown(1) and self:mouseIsIn() then
+            self.click = true
             self.down = true
         end
 
@@ -116,7 +116,7 @@ Components.Sound = Component {
         end
     end,
     update = function(self)
-        if self.play and self.play > 0 then
+        if self.play then
             self.sound:stop()
             self.sound:play()
         end
